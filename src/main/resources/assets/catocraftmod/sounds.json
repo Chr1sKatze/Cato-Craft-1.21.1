@@ -1,0 +1,8 @@
+{
+  "frost_mage_villager_acquiring_poi": {
+    "subtitle": "sounds.catocraftmod.frost_mage_villager_acquiring_poi",
+    "sounds": [
+      "tutorialmod:frost_mage_villager_acquiring_poi"
+    ]
+  }
+}

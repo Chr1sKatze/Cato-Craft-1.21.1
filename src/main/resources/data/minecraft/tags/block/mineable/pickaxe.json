@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "catocraftmod:steel_block",
+    "catocraftmod:platinum_block",
+    "catocraftmod:platinum_deepslate_ore",
+    "catocraftmod:platinum_ore"
+  ]
+}

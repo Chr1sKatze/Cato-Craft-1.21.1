@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "catocraftmod:frost_mage_villager_poi",
+      "required": false
+    }
+  ]
+}

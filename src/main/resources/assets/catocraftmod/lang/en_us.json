@@ -1,0 +1,19 @@
+{
+  "item.catocraftmod.steel_ingot": "Steel Ingot",
+  "item.catocraftmod.steel_nugget": "Steel Nugget",
+  "item.catocraftmod.raw_steel": "Raw Steel",
+
+  "item.catocraftmod.platinum_ingot": "Platinum Ingot",
+  "item.catocraftmod.platinum_nugget": "Platinum Nugget",
+  "item.catocraftmod.raw_platinum": "Raw Platinum",
+
+  "block.catocraftmod.steel_block": "Steel Block",
+  "block.catocraftmod.platinum_block": "Platinum Block",
+  "block.catocraftmod.platinum_ore": "Platinum Ore",
+  "block.catocraftmod.platinum_deepslate_ore": "Platinum Deepslate Ore",
+
+  "entity.minecraft.villager.catocraftmod.frost_mage_villager": "Frost Mage",
+
+  "creativetab.catocraftmod.items": "cato-Craft Items",
+  "creativetab.catocraftmod.blocks": "cato-Craft Blocks"
+}
