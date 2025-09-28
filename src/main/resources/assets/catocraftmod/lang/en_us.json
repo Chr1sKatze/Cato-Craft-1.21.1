@@ -1,4 +1,10 @@
 {
+  "item.minecraft.diamond_sword": "Diamond Steel Sword",
+  "item.minecraft.diamond_pickaxe": "Diamond Steel Pickaxe",
+  "item.minecraft.diamond_axe": "Diamond Steel Axe",
+  "item.minecraft.diamond_shovel": "Diamond Steel Shovel",
+  "item.minecraft.diamond_hoe": "Diamond Steel Hoe",
+
   "item.catocraftmod.steel_ingot": "Steel Ingot",
   "item.catocraftmod.steel_nugget": "Steel Nugget",
   "item.catocraftmod.raw_steel": "Raw Steel",
@@ -15,5 +21,7 @@
   "entity.minecraft.villager.catocraftmod.frost_mage_villager": "Frost Mage",
 
   "creativetab.catocraftmod.items": "cato-Craft Items",
-  "creativetab.catocraftmod.blocks": "cato-Craft Blocks"
+  "creativetab.catocraftmod.blocks": "cato-Craft Blocks",
+
+  "enchantment.catocraftmod.gathering_speed": "Gathering Speed"
 }

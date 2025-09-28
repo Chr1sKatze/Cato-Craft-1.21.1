@@ -4,7 +4,6 @@ import net.chriskatze.catocraftmod.block.ModBlocks;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
 import net.chriskatze.catocraftmod.sound.ModSounds;
-import net.chriskatze.catocraftmod.villager.FarmerTradeReplacer;
 import net.chriskatze.catocraftmod.villager.ModVillagers;
 import net.minecraft.world.item.CreativeModeTabs;
 import org.slf4j.Logger;
@@ -37,6 +36,7 @@ public class CatocraftMod {
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
+//        NeoForge.EVENT_BUS.register(ModTooltips.class);
 
         ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);

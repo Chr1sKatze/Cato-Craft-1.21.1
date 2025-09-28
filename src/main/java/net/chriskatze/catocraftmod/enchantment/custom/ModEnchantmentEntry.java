@@ -1,0 +1,26 @@
+package net.chriskatze.catocraftmod.enchantment.custom;
+
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.enchantment.Enchantment;
+
+/**
+ * Helper class to store a custom enchantment and its max level.
+ */
+public class ModEnchantmentEntry {
+    private final ResourceKey<Enchantment> key;
+    private final int maxLevel;
+
+    // Constructor matches the class name
+    public ModEnchantmentEntry(ResourceKey<Enchantment> key, int maxLevel) {
+        this.key = key;
+        this.maxLevel = maxLevel;
+    }
+
+    public ResourceKey<Enchantment> getKey() {
+        return key;
+    }
+
+    public int getMaxLevel() {
+        return maxLevel;
+    }
+}
