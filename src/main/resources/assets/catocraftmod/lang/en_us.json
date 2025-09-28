@@ -20,8 +20,9 @@
 
   "entity.minecraft.villager.catocraftmod.frost_mage_villager": "Frost Mage",
 
-  "creativetab.catocraftmod.items": "cato-Craft Items",
-  "creativetab.catocraftmod.blocks": "cato-Craft Blocks",
+  "creativetab.catocraftmod.items": "Cato-Craft Items",
+  "creativetab.catocraftmod.blocks": "Cato-Craft Blocks",
 
-  "enchantment.catocraftmod.gathering_speed": "Gathering Speed"
+  "enchantment.catocraftmod.gathering_speed_1": "Gathering Speed I",
+  "item.catocraftmod.gathering_speed_book": "Gathering Speed Crystal"
 }

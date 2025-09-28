@@ -14,35 +14,33 @@ import net.minecraft.world.item.enchantment.Enchantment;
 
 public class ModEnchantments {
 
-    // Custom enchantment with its own max level
+    // Custom enchantment entry
     public static final ModEnchantmentEntry GATHERING_SPEED =
             new ModEnchantmentEntry(
                     ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "gathering_speed")),
-                    5 // max level
+                            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "gathering_speed_1")),
+                    5
             );
 
     public static void bootstrap(BootstrapContext<Enchantment> context) {
         HolderGetter<Item> items = context.lookup(Registries.ITEM);
 
-        // Reference to your custom item tag
         var gatheringToolRef = items.getOrThrow(
                 ResourceKey.create(Registries.ITEM,
                         ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "gathering_tools"))
         );
 
-        // Wrap the reference in a HolderSet<Item>
         HolderSet<Item> gatheringTools = HolderSet.direct(gatheringToolRef);
 
         // Register the enchantment
         register(context, GATHERING_SPEED.getKey(), Enchantment.enchantment(Enchantment.definition(
-                gatheringTools,                // primary items
-                gatheringTools,                // secondary items
-                GATHERING_SPEED.getMaxLevel(), // max level
-                1,                             // rarity/cost
-                Enchantment.dynamicCost(9999, 0), // min cost (disabled)
-                Enchantment.dynamicCost(9999, 0), // max cost (disabled)
-                1,                             // weight
+                gatheringTools,
+                gatheringTools,
+                GATHERING_SPEED.getMaxLevel(),
+                1,
+                Enchantment.dynamicCost(9999, 0),
+                Enchantment.dynamicCost(9999, 0),
+                1,
                 EquipmentSlotGroup.MAINHAND
         )));
     }

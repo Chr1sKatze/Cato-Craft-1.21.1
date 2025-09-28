@@ -4,14 +4,14 @@ import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModItems;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
@@ -29,7 +29,8 @@ public class DynamicCustomAnvilHandler {
     private static final Map<ResourceKey<Enchantment>, Integer> CUSTOM_ENCHANTMENTS = new HashMap<>();
 
     static {
-        CUSTOM_ENCHANTMENTS.put(ModEnchantments.GATHERING_SPEED.getKey(), ModEnchantments.GATHERING_SPEED.getMaxLevel());
+        CUSTOM_ENCHANTMENTS.put(ModEnchantments.GATHERING_SPEED.getKey(),
+                ModEnchantments.GATHERING_SPEED.getMaxLevel());
     }
 
     private static final ResourceLocation GATHERING_TOOLS_TAG = Objects.requireNonNull(
@@ -44,6 +45,8 @@ public class DynamicCustomAnvilHandler {
         Player player = event.getPlayer();
         Level world = player.getCommandSenderWorld();
 
+        if (left.isEmpty() || right.isEmpty()) return;
+
         // Get the enchantment key from the book
         ResourceKey<Enchantment> enchantmentKey = ModItems.getEnchantmentKeyFromBook(right.getItem());
         if (enchantmentKey == null) return;
@@ -55,28 +58,33 @@ public class DynamicCustomAnvilHandler {
                 .registryOrThrow(Registries.ENCHANTMENT)
                 .getHolderOrThrow(enchantmentKey);
 
-        // Get the raw Enchantment from the holder
-        Enchantment enchantment = enchantmentHolder.value();
+        // Get current level
+        int currentLevel = left.getEnchantments().getLevel(enchantmentHolder);
 
-        // Current level using Holder<Enchantment>
-        int currentLevel = EnchantmentHelper.getItemEnchantmentLevel(enchantmentHolder, left);
-
+        // Determine new level
         int maxLevel = CUSTOM_ENCHANTMENTS.getOrDefault(enchantmentKey, 1);
         int newLevel = Math.min(currentLevel + 1, maxLevel);
 
-        // Apply enchantment to a copy of the tool
+        // Create a mutable map of existing enchantments
+        Map<Holder<Enchantment>, Integer> enchantments = new HashMap<>();
+        ItemEnchantments existingEnchants = left.getEnchantments();
+        for (Holder<Enchantment> holder : existingEnchants.keySet()) {
+            enchantments.put(holder, existingEnchants.getLevel(holder));
+        }
+
+        // Create a copy to be the anvil output
         ItemStack result = left.copy();
 
-        // Get existing enchantments on the item
-        Map<Enchantment, Integer> currentEnchants = EnchantmentHelper.getEnchantments(result);
+        // Build the updated ItemEnchantments by mutating the existing map
+        // (uses the Holder<Enchantment> 'enchantmentHolder' you already have)
+        ItemEnchantments updated = EnchantmentHelper.updateEnchantments(left, mutable -> {
+            mutable.set(enchantmentHolder, newLevel);
+        });
 
-        // Update or add your custom enchantment
-        currentEnchants.put(enchantment, newLevel);
+        // Apply the updated enchantments to the result ItemStack
+        EnchantmentHelper.setEnchantments(result, updated);
 
-        // Apply the updated enchantments back to the ItemStack
-        EnchantmentHelper.setEnchantments(currentEnchants, result);
-
-        // Set output
+        // then set the output as you already do
         event.setOutput(result);
         event.setCost(1);
     }
