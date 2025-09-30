@@ -1,6 +1,7 @@
 package net.chriskatze.catocraftmod;
 
 import net.chriskatze.catocraftmod.block.ModBlocks;
+import net.chriskatze.catocraftmod.enchantment.custom.DynamicCustomAnvilHandler;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
 import net.chriskatze.catocraftmod.sound.ModSounds;
@@ -29,6 +30,7 @@ public class CatocraftMod {
         // Register events
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.register(DynamicCustomAnvilHandler.class);
 
         // Register deferred content
         ModCreativeModeTabs.register(modEventBus);

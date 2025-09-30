@@ -1,91 +1,99 @@
 package net.chriskatze.catocraftmod.enchantment.custom;
 
-import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
-import net.chriskatze.catocraftmod.item.ModItems;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.extensions.IItemStackExtension;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
+import net.chriskatze.catocraftmod.CatocraftMod;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Dynamic anvil handler for multiple custom enchantments.
- * Supports linear progression of enchantment levels via a single book type per enchantment.
- */
 public class DynamicCustomAnvilHandler {
-
-    private static final Map<ResourceKey<Enchantment>, Integer> CUSTOM_ENCHANTMENTS = new HashMap<>();
-
-    static {
-        CUSTOM_ENCHANTMENTS.put(ModEnchantments.GATHERING_SPEED.getKey(),
-                ModEnchantments.GATHERING_SPEED.getMaxLevel());
-    }
-
-    private static final ResourceLocation GATHERING_TOOLS_TAG = Objects.requireNonNull(
-            ResourceLocation.tryParse("catocraftmod:gathering_tools")
-    );
 
     @SubscribeEvent
     public static void onAnvilUpdate(AnvilUpdateEvent event) {
-        ItemStack left = event.getLeft();
-        ItemStack right = event.getRight();
+        ItemStack target = event.getLeft();
+        ItemStack book = event.getRight();
+
+        if (target.isEmpty() || book.isEmpty()) return;
 
         Player player = event.getPlayer();
         Level world = player.getCommandSenderWorld();
 
-        if (left.isEmpty() || right.isEmpty()) return;
+        // Get registry lookup for enchantments
+        HolderLookup.RegistryLookup<Enchantment> lookup =
+                world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 
-        // Get the enchantment key from the book
-        ResourceKey<Enchantment> enchantmentKey = ModItems.getEnchantmentKeyFromBook(right.getItem());
-        if (enchantmentKey == null) return;
+        // Access enchantments through IItemStackExtension
+        IItemStackExtension targetExt = (IItemStackExtension) target;
+        IItemStackExtension bookExt = (IItemStackExtension) book;
 
-        if (!left.is(ItemTags.create(GATHERING_TOOLS_TAG))) return;
+        ItemEnchantments bookEnchants = bookExt.getAllEnchantments(lookup);
 
-        // Get Holder<Enchantment>
-        Holder<Enchantment> enchantmentHolder = world.registryAccess()
-                .registryOrThrow(Registries.ENCHANTMENT)
-                .getHolderOrThrow(enchantmentKey);
-
-        // Get current level
-        int currentLevel = left.getEnchantments().getLevel(enchantmentHolder);
-
-        // Determine new level
-        int maxLevel = CUSTOM_ENCHANTMENTS.getOrDefault(enchantmentKey, 1);
-        int newLevel = Math.min(currentLevel + 1, maxLevel);
-
-        // Create a mutable map of existing enchantments
-        Map<Holder<Enchantment>, Integer> enchantments = new HashMap<>();
-        ItemEnchantments existingEnchants = left.getEnchantments();
-        for (Holder<Enchantment> holder : existingEnchants.keySet()) {
-            enchantments.put(holder, existingEnchants.getLevel(holder));
+        // --- Fallback for enchanted books (StoredEnchantments) ---
+        if (bookEnchants.isEmpty() && book.getItem() instanceof EnchantedBookItem) {
+            ItemEnchantments stored = book.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY);
+            if (!stored.isEmpty()) {
+                bookEnchants = stored;
+                CatocraftMod.LOGGER.info("Loaded stored enchantments from book: {}", stored);
+            }
         }
 
-        // Create a copy to be the anvil output
-        ItemStack result = left.copy();
+        if (bookEnchants.isEmpty()) {
+            CatocraftMod.LOGGER.info("Book has no enchantments!");
+            return;
+        }
 
-        // Build the updated ItemEnchantments by mutating the existing map
-        // (uses the Holder<Enchantment> 'enchantmentHolder' you already have)
-        ItemEnchantments updated = EnchantmentHelper.updateEnchantments(left, mutable -> {
-            mutable.set(enchantmentHolder, newLevel);
-        });
+        ItemEnchantments targetEnchants = targetExt.getAllEnchantments(lookup);
 
-        // Apply the updated enchantments to the result ItemStack
-        EnchantmentHelper.setEnchantments(result, updated);
+        // Copy target to create result
+        ItemStack result = target.copy();
+        AtomicBoolean changed = new AtomicBoolean(false);
 
-        // then set the output as you already do
+        // Merge enchantments into mutable
+        ItemEnchantments.Mutable merged = new ItemEnchantments.Mutable(targetEnchants);
+
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : bookEnchants.entrySet()) {
+            Holder<Enchantment> enchHolder = entry.getKey();
+            int bookLevel = entry.getIntValue();
+            int currentLevel = targetEnchants.getLevel(enchHolder);
+            int maxLevel = enchHolder.value().getMaxLevel();
+
+            // Vanilla rule: only apply if the target item supports this enchantment
+            boolean canApply = enchHolder.value().definition().supportedItems()
+                    .stream()
+                    .anyMatch(target::is);
+            if (!canApply) continue;
+
+            int newLevel = Math.min(currentLevel + bookLevel, maxLevel);
+            if (newLevel > currentLevel) {
+                merged.set(enchHolder, newLevel);
+                changed.set(true);
+            }
+        }
+
+        if (!changed.get()) return;
+
+        // Apply merged enchantments back to result
+        EnchantmentHelper.setEnchantments(result, merged.toImmutable());
+
+        // Vanilla behaviour: keep the name, just change enchantments
         event.setOutput(result);
         event.setCost(1);
+
+        player.sendSystemMessage(Component.literal("Upgraded enchantments"));
+        CatocraftMod.LOGGER.info("Tool upgraded via anvil: {} -> {}", target, result);
     }
 }

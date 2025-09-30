@@ -2,9 +2,13 @@ package net.chriskatze.catocraftmod.item;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -30,15 +34,23 @@ public class ModItems {
     public static final DeferredItem<Item> GATHERING_SPEED_BOOK = ITEMS.register("gathering_speed_book",
             () -> new EnchantedBookItem(new Item.Properties().stacksTo(1)));
 
-    /**
-     * Returns the enchantment key for a given custom book item.
-     * Safe to call at runtime (after registries are bound).
-     */
-    public static ResourceKey<net.minecraft.world.item.enchantment.Enchantment>
-    getEnchantmentKeyFromBook(Item bookItem) {
-        if (bookItem == GATHERING_SPEED_BOOK.get()) {
-            return ModEnchantments.GATHERING_SPEED.getKey();
+    public static Holder<Enchantment> getEnchantmentHolderFromBook(ItemStack bookStack, Level world) {
+        // Get all enchantments on the book
+        var enchants = bookStack.getEnchantments();
+
+        // Try to get a Holder<Enchantment> for our gathering_speed enchantment
+        Holder<Enchantment> gatheringHolder = world.registryAccess()
+                .registryOrThrow(Registries.ENCHANTMENT)
+                .getHolder(ModEnchantments.GATHERING_SPEED.getKey())
+                .orElse(null);
+
+        if (gatheringHolder == null) return null;
+
+        // If the book contains the gathering_speed enchantment, return the holder
+        if (enchants.getLevel(gatheringHolder) > 0) {
+            return gatheringHolder;
         }
+
         return null;
     }
 

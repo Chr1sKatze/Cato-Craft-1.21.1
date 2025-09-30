@@ -75,7 +75,6 @@ public class ModEvents {
             trades.get(4).add((entity, randomSource) -> new MerchantOffer(
                     new ItemCost(Items.IRON_SWORD, 3),
                     new ItemStack(ModItems.RAW_PLATINUM.get(), 18), 6, 3, 0.05f));
-
         }
     }
 }
