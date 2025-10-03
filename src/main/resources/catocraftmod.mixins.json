@@ -3,7 +3,9 @@
   "package": "net.chriskatze.catocraftmod.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "VillagerTradeExpansionMixin"
+    "VillagerTradeExpansionMixin",
+    "ToolDurabilityMixin",
+    "AnvilMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1

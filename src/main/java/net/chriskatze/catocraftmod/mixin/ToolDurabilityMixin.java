@@ -18,7 +18,7 @@ public class ToolDurabilityMixin {
         } else if ((Object) this == Tiers.STONE) {
             cir.setReturnValue(64); // vanilla: 131
         } else if ((Object) this == Tiers.IRON) {
-            cir.setReturnValue(128); // vanilla: 250
+            cir.setReturnValue(10); // vanilla: 250
         } else if ((Object) this == Tiers.GOLD) {
             cir.setReturnValue(96); // vanilla: 32
         } else if ((Object) this == Tiers.DIAMOND) {

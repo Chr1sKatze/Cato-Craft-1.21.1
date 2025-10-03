@@ -1,6 +1,7 @@
 package net.chriskatze.catocraftmod;
 
 import net.chriskatze.catocraftmod.block.ModBlocks;
+import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.chriskatze.catocraftmod.enchantment.custom.DynamicCustomAnvilHandler;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
@@ -47,6 +48,7 @@ public class CatocraftMod {
     }
 
     private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        AnvilConfig.loadConfig();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
