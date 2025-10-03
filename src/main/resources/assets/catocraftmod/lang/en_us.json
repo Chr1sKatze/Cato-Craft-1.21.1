@@ -23,6 +23,28 @@
   "creativetab.catocraftmod.items": "Cato-Craft Items",
   "creativetab.catocraftmod.blocks": "Cato-Craft Blocks",
 
-  "enchantment.catocraftmod.gathering_speed_1": "Gathering Speed I",
-  "item.catocraftmod.gathering_speed_book": "Gathering Speed Crystal"
+  "enchantment.catocraftmod.gathering_speed": "§f\uF934§r Gathering Speed",
+  "item.catocraftmod.gathering_speed_book": "Gathering Speed Crystal",
+
+  "attribute.name.combat_roll.count": "§f\uF953§r Extra Roll",
+  "attribute.name.combat_roll.distance": "§f\uF951§r Roll Distance",
+  "attribute.name.combat_roll.recharge": "§f\uF952§r Roll Recharge",
+  "attribute.name.generic.armor": "§f\uF934§r Armor",
+  "attribute.name.generic.armor_toughness": "§f\uF935§r Armor Toughness",
+  "attribute.name.generic.attack_damage": "§f\uF936§r Attack Damage",
+  "attribute.name.generic.attack_knockback": "§f\uF937§r Attack Knockback",
+  "attribute.name.generic.attack_range": "§f\uF933§r Attack Range",
+  "attribute.name.generic.attack_speed": "§f\uF938§r Attack Speed",
+  "attribute.name.generic.fall_damage_multiplier": "§f\uF946§r Fall Damage Multiplier",
+  "attribute.name.generic.gravity": "§f\uF945§r Gravity",
+  "attribute.name.generic.jump_strength": "§f\uF944§r Jump Strength",
+  "attribute.name.generic.knockback_resistance": "§f\uF940§r Knockback Resistance",
+  "attribute.name.generic.luck": "§f\uF941§r Luck",
+  "attribute.name.generic.max_health": "§f\uF942§r Max Health",
+  "attribute.name.generic.movement_speed": "§f\uF943§r Speed",
+  "attribute.name.player.block_break_speed": "§f\uF948§r Block Break Speed",
+  "attribute.name.player.block_interaction_range": "§f\uF949§r Block Interaction Range",
+  "attribute.name.player.entity_interaction_range": "§f\uF950§r Entity Interaction Range",
+  "attribute.name.player.mining_efficiency": "§f\uF947§r Mining Efficiency",
+  "attribute.name.player.sweeping_damage_ratio": "§f\uF939§r Sweeping Damage Ratio"
 }

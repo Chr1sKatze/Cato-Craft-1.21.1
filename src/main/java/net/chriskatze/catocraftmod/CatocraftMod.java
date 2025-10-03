@@ -31,7 +31,6 @@ public class CatocraftMod {
         // Register events
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
-        NeoForge.EVENT_BUS.register(DynamicCustomAnvilHandler.class);
 
         // Register deferred content
         ModCreativeModeTabs.register(modEventBus);

@@ -1,6 +1,7 @@
 package net.chriskatze.catocraftmod.enchantment.custom;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
@@ -14,6 +15,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.extensions.IItemStackExtension;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 
@@ -22,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@EventBusSubscriber(modid = CatocraftMod.MOD_ID)
 public class DynamicCustomAnvilHandler {
 
     private static final Map<String, Set<String>> sentMessages = new HashMap<>();

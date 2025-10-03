@@ -1,0 +1,166 @@
+{
+	"providers": [
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.attack_range.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF933"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.armor.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF934"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.armor_toughness.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF935"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.attack_damage.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF936"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.attack_knockback.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF937"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.attack_speed.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF938"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/player.sweeping_damage_ratio.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF939"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.knockback_resistance.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF940"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.luck.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF941"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.max_health.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF942"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.movement_speed.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF943"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.jump_strength.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF944"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.gravity.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF945"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/generic.fall_damage_multiplier.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF946"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/player.mining_efficiency.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF947"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/player.block_break_speed.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF948"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/player.block_interaction_range.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF949"
+			]
+		},
+		{
+			"type": "bitmap",
+			"file": "catocraftmod:attribute_icon/player.entity_interaction_range.png",
+			"ascent": 8,
+			"height": 9,
+			"chars": [
+				"\uF950"
+			]
+		}
+	]
+}

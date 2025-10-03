@@ -18,7 +18,7 @@ public class ModEnchantments {
     public static final ModEnchantmentEntry GATHERING_SPEED =
             new ModEnchantmentEntry(
                     ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "gathering_speed_1")),
+                            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "gathering_speed")),
                     5
             );
 

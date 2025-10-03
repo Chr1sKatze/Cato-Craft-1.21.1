@@ -29,12 +29,12 @@ public class ToolDurabilityMixin {
     }
 
     // Enchantability
-    @Inject(method = "getEnchantmentValue", at = @At("HEAD"), cancellable = true)
-    private void changeEnchantability(CallbackInfoReturnable<Integer> cir) {
-        if ((Object) this == Tiers.WOOD || (Object) this == Tiers.STONE || (Object) this == Tiers.IRON) {
-            cir.setReturnValue(0); // not enchantable
-        }
-    }
+//    @Inject(method = "getEnchantmentValue", at = @At("HEAD"), cancellable = true)
+//    private void changeEnchantability(CallbackInfoReturnable<Integer> cir) {
+//        if ((Object) this == Tiers.WOOD || (Object) this == Tiers.STONE || (Object) this == Tiers.IRON) {
+//            cir.setReturnValue(0); // not enchantable
+//        }
+//    }
 
     // Mining Speed
     @Inject(method = "getSpeed", at = @At("HEAD"), cancellable = true)
