@@ -1,14 +1,8 @@
 package net.chriskatze.catocraftmod.item;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
-import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.item.EnchantedBookItem;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -17,7 +11,7 @@ public class ModItems {
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CatocraftMod.MOD_ID);
 
-    // Standard items
+    // ---------------- Standard items ----------------
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.register("steel_ingot",
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> STEEL_NUGGET = ITEMS.register("steel_nugget",
@@ -30,29 +24,23 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> RAW_PLATINUM = ITEMS.register("raw_platinum",
             () -> new Item(new Item.Properties()));
-    // Custom enchanted book
-    public static final DeferredItem<Item> GATHERING_SPEED_BOOK = ITEMS.register("gathering_speed_book",
-            () -> new EnchantedBookItem(new Item.Properties().stacksTo(1)));
 
-    public static Holder<Enchantment> getEnchantmentHolderFromBook(ItemStack bookStack, Level world) {
-        // Get all enchantments on the book
-        var enchants = bookStack.getEnchantments();
+    // ---------------- Crystal Items ----------------
+    public static final DeferredItem<Item> GATHERING_CRYSTAL = ITEMS.register("gathering_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":gathering_speed"),
+                    new Item.Properties().stacksTo(64)));
 
-        // Try to get a Holder<Enchantment> for our gathering_speed enchantment
-        Holder<Enchantment> gatheringHolder = world.registryAccess()
-                .registryOrThrow(Registries.ENCHANTMENT)
-                .getHolder(ModEnchantments.GATHERING_SPEED.getKey())
-                .orElse(null);
+    public static final DeferredItem<Item> REINFORCEMENT_CRYSTAL = ITEMS.register("reinforcement_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":reinforcement"),
+                    new Item.Properties().stacksTo(64)));
 
-        if (gatheringHolder == null) return null;
+    public static final DeferredItem<Item> PROSPERITY_CRYSTAL = ITEMS.register("prosperity_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":prosperity"),
+                    new Item.Properties().stacksTo(64)));
 
-        // If the book contains the gathering_speed enchantment, return the holder
-        if (enchants.getLevel(gatheringHolder) > 0) {
-            return gatheringHolder;
-        }
-
-        return null;
-    }
+    public static final DeferredItem<Item> ATTRACTION_CRYSTAL = ITEMS.register("attraction_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":attraction"),
+                    new Item.Properties().stacksTo(64)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

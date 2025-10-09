@@ -18,7 +18,7 @@ public class ToolDurabilityMixin {
         } else if ((Object) this == Tiers.STONE) {
             cir.setReturnValue(64); // vanilla: 131
         } else if ((Object) this == Tiers.IRON) {
-            cir.setReturnValue(10); // vanilla: 250
+            cir.setReturnValue(100); // vanilla: 250
         } else if ((Object) this == Tiers.GOLD) {
             cir.setReturnValue(96); // vanilla: 32
         } else if ((Object) this == Tiers.DIAMOND) {
@@ -29,12 +29,12 @@ public class ToolDurabilityMixin {
     }
 
     // Enchantability
-    @Inject(method = "getEnchantmentValue", at = @At("HEAD"), cancellable = true)
-    private void changeEnchantability(CallbackInfoReturnable<Integer> cir) {
-        if ((Object) this == Tiers.WOOD || (Object) this == Tiers.STONE || (Object) this == Tiers.IRON) {
-            cir.setReturnValue(0); // not enchantable
-        }
-    }
+//    @Inject(method = "getEnchantmentValue", at = @At("HEAD"), cancellable = true)
+//    private void changeEnchantability(CallbackInfoReturnable<Integer> cir) {
+//        if ((Object) this == Tiers.WOOD || (Object) this == Tiers.STONE || (Object) this == Tiers.IRON) {
+//            cir.setReturnValue(0); // not enchantable
+//        }
+//    }
 
     // Mining Speed
     @Inject(method = "getSpeed", at = @At("HEAD"), cancellable = true)

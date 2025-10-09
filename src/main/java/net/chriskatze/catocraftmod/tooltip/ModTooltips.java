@@ -1,11 +1,15 @@
 package net.chriskatze.catocraftmod.tooltip;
 
+import net.chriskatze.catocraftmod.CatocraftMod;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
+@EventBusSubscriber(modid = CatocraftMod.MOD_ID)
 public class ModTooltips {
 
     @SubscribeEvent
@@ -28,7 +32,7 @@ public class ModTooltips {
                     .withStyle(style -> style.withColor(TextColor.fromRgb(0xAAAAAA)))); // light gray
 
             // Durability (dark green like vanilla)
-            event.getToolTip().add(Component.literal(" Durability: " + remainingDurability + " / " + maxDurability)
+            event.getToolTip().add(Component.literal("§f\uF935§r Durability: " + remainingDurability + " / " + maxDurability)
                     .withStyle(style -> style.withColor(TextColor.fromRgb(0x00AA00)))); // dark green
 
             // Mining speed (dark green)

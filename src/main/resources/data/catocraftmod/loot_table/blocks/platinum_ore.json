@@ -2,7 +2,7 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
+      "rolls": 1.0,
       "entries": [
         {
           "type": "minecraft:alternatives",
@@ -15,12 +15,7 @@
                   "predicate": {
                     "predicates": {
                       "minecraft:enchantments": [
-                        {
-                          "enchantments": "minecraft:silk_touch",
-                          "levels": {
-                            "min": 1
-                          }
-                        }
+                        { "enchantments": ["minecraft:silk_touch"], "levels": { "min": 1 } }
                       ]
                     }
                   }
@@ -30,23 +25,21 @@
             },
             {
               "type": "minecraft:item",
+              "name": "catocraftmod:raw_platinum",
               "functions": [
                 {
+                  "function": "minecraft:apply_bonus",
                   "enchantment": "minecraft:fortune",
-                  "formula": "minecraft:ore_drops",
-                  "function": "minecraft:apply_bonus"
+                  "formula": "minecraft:ore_drops"
                 },
                 {
                   "function": "minecraft:explosion_decay"
                 }
-              ],
-              "name": "catocraftmod:raw_platinum"
+              ]
             }
           ]
         }
-      ],
-      "rolls": 1.0
+      ]
     }
-  ],
-  "random_sequence": "catocraftmod:blocks/platinum_ore"
+  ]
 }

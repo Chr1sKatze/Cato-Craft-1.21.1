@@ -5,7 +5,9 @@
   "mixins": [
     "VillagerTradeExpansionMixin",
     "ToolDurabilityMixin",
-    "AnvilMenuMixin"
+    "AnvilMenuMixin",
+    "ApplyBonusCountMixin",
+    "ServerLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

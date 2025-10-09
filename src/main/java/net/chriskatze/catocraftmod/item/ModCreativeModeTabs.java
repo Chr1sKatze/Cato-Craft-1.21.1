@@ -27,6 +27,10 @@ public class ModCreativeModeTabs {
                                 output.accept(ModItems.PLATINUM_INGOT);
                                 output.accept(ModItems.PLATINUM_NUGGET);
                                 output.accept(ModItems.RAW_PLATINUM);
+                                output.accept(ModItems.GATHERING_CRYSTAL);
+                                output.accept(ModItems.REINFORCEMENT_CRYSTAL);
+                                output.accept(ModItems.PROSPERITY_CRYSTAL);
+                                output.accept(ModItems.ATTRACTION_CRYSTAL);
                             }).build());
 
     public static final Supplier<CreativeModeTab> CATO_CRAFT_BLOCKS_TAB = CREATIVE_MODE_TAB.register("cato_craft_blocks_tab",
