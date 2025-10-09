@@ -169,5 +169,6 @@ public class CatocraftMod {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+        // No changes needed
     }
 }

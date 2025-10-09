@@ -14,6 +14,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 
 public class ModEnchantments {
 
+    // Custom enchantment entry
     public static final ModEnchantmentEntry GATHERING_SPEED =
             new ModEnchantmentEntry(
                     ResourceKey.create(Registries.ENCHANTMENT,
