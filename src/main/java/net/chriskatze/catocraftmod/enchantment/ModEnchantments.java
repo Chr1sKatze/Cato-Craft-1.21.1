@@ -25,6 +25,9 @@ public class ModEnchantments {
     public static final ModEnchantmentEntry ATTRACTION = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("attraction")), 12);
 
+    public static final ModEnchantmentEntry ORE_SENSE = new ModEnchantmentEntry(
+            ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("ore_sense")), 12);
+
     public static void bootstrap(BootstrapContext<Enchantment> context) {
         // Lookup all items from the registry
         HolderGetter<Item> items = context.lookup(Registries.ITEM);
@@ -33,12 +36,14 @@ public class ModEnchantments {
         ModTags.initHolderSets(items);
 
         // Now the HolderSets exist and can be used safely
+        HolderSet<Item> ore_SenseItems = ModTags.ORE_SENSE_ITEMS_HOLDER;
         HolderSet<Item> reinforcementItems = ModTags.REINFORCEMENT_ITEMS_HOLDER;
         HolderSet<Item> gatheringSpeedItems = ModTags.GATHERING_SPEED_ITEMS_HOLDER;
         HolderSet<Item> prosperityItems = ModTags.PROSPERITY_ITEMS_HOLDER;
         HolderSet<Item> attractionItems = ModTags.ATTRACTION_ITEMS_HOLDER;
 
         // Register enchantments
+        registerEnchant(context, ORE_SENSE, ore_SenseItems);
         registerEnchant(context, GATHERING_SPEED, gatheringSpeedItems);
         registerEnchant(context, REINFORCEMENT, reinforcementItems);
         registerEnchant(context, PROSPERITY, prosperityItems);

@@ -42,6 +42,10 @@ public class ModItems {
             () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":attraction"),
                     new Item.Properties().stacksTo(64)));
 
+    public static final DeferredItem<Item> ORE_SENSE_CRYSTAL = ITEMS.register("ore_sense_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":ore_sense"),
+                    new Item.Properties().stacksTo(64)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

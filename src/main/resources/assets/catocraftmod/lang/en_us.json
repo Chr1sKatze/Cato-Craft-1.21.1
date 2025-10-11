@@ -27,11 +27,13 @@
   "enchantment.catocraftmod.reinforcement": "§f\uF934§r Reinforcement",
   "enchantment.catocraftmod.prosperity": "§f\uF934§r Prosperity",
   "enchantment.catocraftmod.attraction": "§f\uF934§r Attraction",
+  "enchantment.catocraftmod.ore_sense": "Ore Sense",
 
   "item.catocraftmod.gathering_crystal": "Gathering Speed Crystal",
   "item.catocraftmod.reinforcement_crystal": "Reinforcement Crystal",
   "item.catocraftmod.prosperity_crystal": "Prosperity Crystal",
   "item.catocraftmod.attraction_crystal": "Attraction Crystal",
+  "item.catocraftmod.ore_sense_crystal": "Ore Sense Crystal",
 
   "enchantment.level.1": "I",
   "enchantment.level.2": "II",

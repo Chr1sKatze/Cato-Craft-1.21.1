@@ -31,6 +31,7 @@ public class ModCreativeModeTabs {
                                 output.accept(ModItems.REINFORCEMENT_CRYSTAL);
                                 output.accept(ModItems.PROSPERITY_CRYSTAL);
                                 output.accept(ModItems.ATTRACTION_CRYSTAL);
+                                output.accept(ModItems.ORE_SENSE_CRYSTAL);
                             }).build());
 
     public static final Supplier<CreativeModeTab> CATO_CRAFT_BLOCKS_TAB = CREATIVE_MODE_TAB.register("cato_craft_blocks_tab",

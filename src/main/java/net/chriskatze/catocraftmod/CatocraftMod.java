@@ -5,6 +5,7 @@ import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
+import net.chriskatze.catocraftmod.network.NetworkHandler;
 import net.chriskatze.catocraftmod.sound.ModSounds;
 import net.chriskatze.catocraftmod.tooltip.ClientTooltipHandler;
 import net.chriskatze.catocraftmod.util.ModTags;
@@ -44,6 +45,7 @@ public class CatocraftMod {
 
         // Register events
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(NetworkHandler::register);
         NeoForge.EVENT_BUS.register(this);
 
         // Register deferred content
@@ -176,6 +178,7 @@ public class CatocraftMod {
         ModEnchantments.ATTRACTION.setHolder(enchants.get(ModEnchantments.ATTRACTION.getKey()).orElseThrow());
         ModEnchantments.GATHERING_SPEED.setHolder(enchants.get(ModEnchantments.GATHERING_SPEED.getKey()).orElseThrow());
         ModEnchantments.REINFORCEMENT.setHolder(enchants.get(ModEnchantments.REINFORCEMENT.getKey()).orElseThrow());
+        ModEnchantments.ORE_SENSE.setHolder(enchants.get(ModEnchantments.ORE_SENSE.getKey()).orElseThrow());
 
         LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized at server start.");
     }
