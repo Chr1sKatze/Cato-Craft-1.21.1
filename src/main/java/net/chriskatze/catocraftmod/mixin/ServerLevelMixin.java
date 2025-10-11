@@ -26,7 +26,7 @@ import java.util.UUID;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
 
-    // 🧩 Constants for attraction behavior
+    // Constants for attraction behavior
     private static final double BASE_RADIUS = 1.0;
     private static final double MAX_RADIUS = 6.0;
     private static final double BASE_SPEED = 0.05;

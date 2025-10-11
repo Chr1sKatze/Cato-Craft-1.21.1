@@ -1,7 +1,8 @@
 {
   "replace": false,
   "values": [
-    "minecraft:iron_pickaxe",
-    "minecraft:diamond_pickaxe"
+    "#minecraft:enchantable/weapon",
+    "#minecraft:enchantable/mining",
+    "#minecraft:enchantable/armor"
   ]
 }

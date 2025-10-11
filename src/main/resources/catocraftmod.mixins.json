@@ -6,7 +6,8 @@
     "VillagerTradeExpansionMixin",
     "ToolDurabilityMixin",
     "AnvilMenuMixin",
-    "ServerLevelMixin"
+    "ServerLevelMixin",
+    "itemStackReinforcementMixin"
   ],
   "injectors": {
     "defaultRequire": 1
