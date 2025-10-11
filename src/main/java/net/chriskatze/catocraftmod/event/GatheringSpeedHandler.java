@@ -1,24 +1,31 @@
 package net.chriskatze.catocraftmod.event;
 
+import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
+import net.chriskatze.catocraftmod.util.ModTags;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
+@EventBusSubscriber(modid = CatocraftMod.MOD_ID)
 public class GatheringSpeedHandler {
 
     @SubscribeEvent
     public static void onBlockBreakSpeed(PlayerEvent.BreakSpeed event) {
-        // Get the player via getEntity()
         var player = event.getEntity();
-
         ItemStack tool = player.getMainHandItem();
 
-        // Use player.level() method to access the world
+        // ✅ Check if the tool is tagged for Gathering Speed
+        if (!tool.is(ModTags.GATHERING_SPEED_ITEMS)) {
+            return;
+        }
+
+        // Get the enchantment holder
         Holder<Enchantment> gatheringSpeedEnchantment = player.level().registryAccess()
                 .registryOrThrow(Registries.ENCHANTMENT)
                 .getHolderOrThrow(ModEnchantments.GATHERING_SPEED.getKey());
@@ -26,7 +33,12 @@ public class GatheringSpeedHandler {
         int level = EnchantmentHelper.getItemEnchantmentLevel(gatheringSpeedEnchantment, tool);
 
         if (level > 0) {
-            event.setNewSpeed(event.getOriginalSpeed() + 1.0f); // flat +1 mining speed
+            float baseSpeed = event.getOriginalSpeed();
+
+            // Example: scale the bonus multiplicatively for better feel
+            float newSpeed = baseSpeed * (1.0f + (0.2f * level));
+
+            event.setNewSpeed(newSpeed);
         }
     }
 }

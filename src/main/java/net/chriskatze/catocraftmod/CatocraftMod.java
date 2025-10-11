@@ -36,8 +36,6 @@ public class CatocraftMod {
     public static final String MOD_ID = "catocraftmod";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final TagKey<Item> GATHERING_TOOLS_TAG = TagKey.create(Registries.ITEM, id("gathering_tools"));
-
     public static ResourceLocation id(String path) {
         return ResourceLocation.tryParse(MOD_ID + ":" + path);
     }
@@ -141,13 +139,6 @@ public class CatocraftMod {
 
     private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
         AnvilConfig.loadConfig();
-
-        // Debug check for tag
-        if (GATHERING_TOOLS_TAG != null) {
-            LOGGER.info("[CatocraftMod] Gathering tools tag is registered: {}", GATHERING_TOOLS_TAG.location());
-        } else {
-            LOGGER.warn("[CatocraftMod] Gathering tools tag could not be registered!");
-        }
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
