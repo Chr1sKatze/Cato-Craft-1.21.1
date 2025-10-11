@@ -6,7 +6,6 @@
     "VillagerTradeExpansionMixin",
     "ToolDurabilityMixin",
     "AnvilMenuMixin",
-    "ApplyBonusCountMixin",
     "ServerLevelMixin"
   ],
   "injectors": {

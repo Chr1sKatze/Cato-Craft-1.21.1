@@ -2,16 +2,20 @@ package net.chriskatze.catocraftmod;
 
 import net.chriskatze.catocraftmod.block.ModBlocks;
 import net.chriskatze.catocraftmod.config.AnvilConfig;
+import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
 import net.chriskatze.catocraftmod.sound.ModSounds;
 import net.chriskatze.catocraftmod.tooltip.ClientTooltipHandler;
+import net.chriskatze.catocraftmod.util.ModTags;
 import net.chriskatze.catocraftmod.villager.ModVillagers;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 import org.slf4j.Logger;
@@ -169,6 +173,19 @@ public class CatocraftMod {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        // No changes needed
+        // ------------------- Item Holders from tags -------------------
+        HolderLookup.RegistryLookup<Item> items = event.getServer().registryAccess().lookupOrThrow(Registries.ITEM);
+        ModTags.initHolderSets(items);
+        LOGGER.info("[CatocraftMod] ModTags HolderSets initialized at server start.");
+
+        // ------------------- Enchantment Holders -------------------
+        HolderLookup.RegistryLookup<Enchantment> enchants = event.getServer().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+
+        ModEnchantments.PROSPERITY.setHolder(enchants.get(ModEnchantments.PROSPERITY.getKey()).orElseThrow());
+        ModEnchantments.ATTRACTION.setHolder(enchants.get(ModEnchantments.ATTRACTION.getKey()).orElseThrow());
+        ModEnchantments.GATHERING_SPEED.setHolder(enchants.get(ModEnchantments.GATHERING_SPEED.getKey()).orElseThrow());
+        ModEnchantments.REINFORCEMENT.setHolder(enchants.get(ModEnchantments.REINFORCEMENT.getKey()).orElseThrow());
+
+        LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized at server start.");
     }
 }

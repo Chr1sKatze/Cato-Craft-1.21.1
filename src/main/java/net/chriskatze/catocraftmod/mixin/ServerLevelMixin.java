@@ -2,6 +2,7 @@ package net.chriskatze.catocraftmod.mixin;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
+import net.chriskatze.catocraftmod.util.ModTags;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
@@ -25,18 +26,13 @@ import java.util.UUID;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
 
-    private static final TagKey<Item> GATHERING_TOOLS_TAG =
-            TagKey.create(Registries.ITEM, CatocraftMod.id("gathering_tools"));
-
-    // 🧩 Easy tuning constants
+    // 🧩 Constants for attraction behavior
     private static final double BASE_RADIUS = 1.0;
     private static final double MAX_RADIUS = 6.0;
-    private static final double BASE_SPEED = 0.03;
-    private static final double MAX_SPEED = 0.03;
+    private static final double BASE_SPEED = 0.05;
+    private static final double MAX_SPEED = 1.00;
     private static final double DAMPING = 0.9;
     private static final double SMOOTHING = 0.2;
-
-    // 🌙 How long items hover after attraction stops (in ticks)
     private static final int GRAVITY_FADE_TICKS = 20;
 
     private static long lastLogTime = 0;
@@ -45,14 +41,22 @@ public abstract class ServerLevelMixin {
     private void attractionTick(CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
         long now = level.getGameTime();
-        boolean shouldLog = (now - lastLogTime) >= 20;
-        if (shouldLog) lastLogTime = now;
+        boolean shouldLogTick = (now - lastLogTime) >= 20;
+        if (shouldLogTick) lastLogTime = now;
+
+        // Flattened HolderSet of all attraction items (tools + swords)
+        var attractionItems = ModTags.getAttractionItemsHolder();
 
         for (Player player : level.players()) {
             ItemStack mainHand = player.getMainHandItem();
-            if (mainHand.isEmpty() || !mainHand.is(GATHERING_TOOLS_TAG)) continue;
+            if (mainHand.isEmpty()) continue;
 
-            // Get enchantment level
+            // Skip if player’s held item is not in attraction items
+            boolean isAttractionItem = attractionItems.stream()
+                    .anyMatch(holder -> holder.value() == mainHand.getItem());
+            if (!isAttractionItem) continue;
+
+            // Get the enchantment level
             int enchantmentLevel = 0;
             try {
                 Holder<Enchantment> attractionHolder = (Holder<Enchantment>) level.registryAccess()
@@ -60,17 +64,20 @@ public abstract class ServerLevelMixin {
                         .getHolderOrThrow(ModEnchantments.ATTRACTION.getKey());
                 enchantmentLevel = EnchantmentHelper.getItemEnchantmentLevel(attractionHolder, mainHand);
             } catch (Exception e) {
-                if (shouldLog)
+                if (shouldLogTick)
                     CatocraftMod.LOGGER.warn("[AttractionMixin] Attraction enchantment not found: {}", e.getMessage());
                 continue;
             }
             if (enchantmentLevel <= 0) continue;
 
             double radius = Math.min(BASE_RADIUS + enchantmentLevel * 0.5, MAX_RADIUS);
-            double baseSpeed = Math.min(BASE_SPEED + 0.02 * enchantmentLevel, MAX_SPEED);
+            double baseSpeed = Math.min(BASE_SPEED + 0.05 * enchantmentLevel, MAX_SPEED);
 
+            // Get all items in range
             AABB searchArea = player.getBoundingBox().inflate(radius + 2.0);
             List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, searchArea);
+
+            int attractedCount = 0;
 
             for (ItemEntity item : items) {
                 if (!item.getPersistentData().hasUUID("CatocraftMiner")) continue;
@@ -84,38 +91,42 @@ public abstract class ServerLevelMixin {
                 );
                 double distance = toPlayer.length();
 
+                // Restore gravity if item is outside attraction radius
                 if (distance > radius || item.isRemoved()) {
-                    // Gradual gravity fade
-                    int fade = item.getPersistentData().getInt("CatocraftGravityFade");
-                    if (fade > 0) {
-                        fade--;
-                        item.getPersistentData().putInt("CatocraftGravityFade", fade);
-                        item.setNoGravity(true);
-                    } else {
-                        item.setNoGravity(false);
-                    }
+                    item.setNoGravity(false);
+                    item.getPersistentData().remove("CatocraftGravityFade");
                     continue;
                 }
 
-                // Item is actively being attracted
+                // Active attraction
                 double speed = baseSpeed + (distance / radius) * baseSpeed;
                 Vec3 direction = toPlayer.normalize();
                 Vec3 desiredMotion = direction.scale(speed);
-                Vec3 newMotion = item.getDeltaMovement().scale(DAMPING).add(desiredMotion.scale(SMOOTHING));
 
-                item.setDeltaMovement(newMotion);
+                // Smooth horizontal motion, direct vertical motion
+                Vec3 oldMotion = item.getDeltaMovement();
+                Vec3 smoothedMotion = new Vec3(
+                        oldMotion.x * DAMPING + desiredMotion.x * SMOOTHING,
+                        desiredMotion.y,
+                        oldMotion.z * DAMPING + desiredMotion.z * SMOOTHING
+                );
+
+                item.setDeltaMovement(smoothedMotion);
                 item.hasImpulse = true;
                 item.setNoGravity(true);
                 item.getPersistentData().putInt("CatocraftGravityFade", GRAVITY_FADE_TICKS);
 
-                if (shouldLog) {
-                    CatocraftMod.LOGGER.debug("[AttractionMixin] Item {} -> Player {} | dist {:.2f} | motion {}",
-                            item, player.getName().getString(), distance, newMotion);
-                }
+                attractedCount++;
+            }
+
+            // Debug logging per player
+            if (shouldLogTick && attractedCount > 0) {
+                CatocraftMod.LOGGER.debug("[AttractionMixin] Player {} attracted {} items with level {}",
+                        player.getName().getString(), attractedCount, enchantmentLevel);
             }
         }
 
-        if (shouldLog)
+        if (shouldLogTick)
             CatocraftMod.LOGGER.debug("[AttractionMixin] Processed item attraction tick");
     }
 }

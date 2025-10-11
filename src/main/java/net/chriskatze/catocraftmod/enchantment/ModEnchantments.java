@@ -2,132 +2,68 @@ package net.chriskatze.catocraftmod.enchantment;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.enchantment.custom.ModEnchantmentEntry;
+import net.chriskatze.catocraftmod.util.ModTags;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
 
 public class ModEnchantments {
+    public static final ModEnchantmentEntry REINFORCEMENT = new ModEnchantmentEntry(
+            ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("reinforcement")), 12);
 
-    // Custom enchantment entry
-    public static final ModEnchantmentEntry GATHERING_SPEED =
-            new ModEnchantmentEntry(
-                    ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":gathering_speed")),
-                    12
-            );
+    public static final ModEnchantmentEntry GATHERING_SPEED = new ModEnchantmentEntry(
+            ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("gathering_speed")), 12);
 
-    public static final ModEnchantmentEntry REINFORCEMENT =
-            new ModEnchantmentEntry(
-                    ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":reinforcement")),
-                    12
-            );
+    public static final ModEnchantmentEntry PROSPERITY = new ModEnchantmentEntry(
+            ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("prosperity")), 12);
 
-    public static final ModEnchantmentEntry PROSPERITY =
-            new ModEnchantmentEntry(
-                    ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":prosperity")),
-                    12
-            );
-
-    public static final ModEnchantmentEntry ATTRACTION =
-            new ModEnchantmentEntry(
-                    ResourceKey.create(Registries.ENCHANTMENT,
-                            ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":attraction")),
-                    12
-            );
+    public static final ModEnchantmentEntry ATTRACTION = new ModEnchantmentEntry(
+            ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("attraction")), 12);
 
     public static void bootstrap(BootstrapContext<Enchantment> context) {
+        // Lookup all items from the registry
         HolderGetter<Item> items = context.lookup(Registries.ITEM);
 
-        var gatheringToolRef = items.getOrThrow(
-                ResourceKey.create(Registries.ITEM,
-                        ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":gathering_tools"))
-        );
+        // Initialize all HolderSets from tags (tools, swords, combined sets)
+        ModTags.initHolderSets(items);
 
-        HolderSet<Item> gatheringTools = HolderSet.direct(gatheringToolRef);
+        // Now the HolderSets exist and can be used safely
+        HolderSet<Item> reinforcementItems = ModTags.REINFORCEMENT_ITEMS_HOLDER;
+        HolderSet<Item> gatheringSpeedItems = ModTags.GATHERING_SPEED_ITEMS_HOLDER;
+        HolderSet<Item> prosperityItems = ModTags.PROSPERITY_ITEMS_HOLDER;
+        HolderSet<Item> attractionItems = ModTags.ATTRACTION_ITEMS_HOLDER;
 
-        // --- GATHERING SPEED ---
-        Enchantment.Builder gatheringBuilder = Enchantment.enchantment(Enchantment.definition(
-                gatheringTools,
-                gatheringTools,
-                GATHERING_SPEED.getMaxLevel(),
-                1,
-                Enchantment.dynamicCost(9999, 0),
-                Enchantment.dynamicCost(9999, 0),
-                1,
-                EquipmentSlotGroup.MAINHAND
-        ));
-
-        // Register and build the actual enchantment
-        register(context, GATHERING_SPEED.getKey(), gatheringBuilder);
-
-        // Retrieve the Holder<Enchantment> for later use in the mixin
-        GATHERING_SPEED.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(GATHERING_SPEED.getKey()));
-
-        // --- REINFORCEMENT ---
-        Enchantment.Builder reinforcementBuilder = Enchantment.enchantment(Enchantment.definition(
-                gatheringTools,
-                gatheringTools,
-                REINFORCEMENT.getMaxLevel(),
-                1,
-                Enchantment.dynamicCost(9999, 0),
-                Enchantment.dynamicCost(9999, 0),
-                1,
-                EquipmentSlotGroup.MAINHAND
-        ));
-
-        // Register and build the actual enchantment
-        register(context, REINFORCEMENT.getKey(), reinforcementBuilder);
-
-        // Retrieve the Holder<Enchantment> for later use in the mixin
-        REINFORCEMENT.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(REINFORCEMENT.getKey()));
-
-        // --- PROSPERITY ---
-        Enchantment.Builder prosperityBuilder = Enchantment.enchantment(Enchantment.definition(
-                gatheringTools,
-                gatheringTools,
-                PROSPERITY.getMaxLevel(),
-                1,
-                Enchantment.dynamicCost(9999, 0),
-                Enchantment.dynamicCost(9999, 0),
-                1,
-                EquipmentSlotGroup.MAINHAND
-        ));
-
-        // Register and build the actual enchantment
-        register(context, PROSPERITY.getKey(), prosperityBuilder);
-
-        // Retrieve the Holder<Enchantment> for later use in the mixin
-        PROSPERITY.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(PROSPERITY.getKey()));
-
-        // --- ATTRACTION ---
-        Enchantment.Builder attractionBuilder = Enchantment.enchantment(Enchantment.definition(
-                gatheringTools, // you can reuse your existing tool tag
-                gatheringTools,
-                ATTRACTION.getMaxLevel(),
-                1,
-                Enchantment.dynamicCost(9999, 0),
-                Enchantment.dynamicCost(9999, 0),
-                1,
-                EquipmentSlotGroup.MAINHAND
-        ));
-
-        // Register and build the actual enchantment
-        register(context, ATTRACTION.getKey(), attractionBuilder);
-
-        // Retrieve the Holder<Enchantment> for later use in the mixin
-        ATTRACTION.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(ATTRACTION.getKey()));
+        // Register enchantments
+        registerEnchant(context, GATHERING_SPEED, gatheringSpeedItems);
+        registerEnchant(context, REINFORCEMENT, reinforcementItems);
+        registerEnchant(context, PROSPERITY, prosperityItems);
+        registerEnchant(context, ATTRACTION, attractionItems);
     }
 
-    private static void register(BootstrapContext<Enchantment> registry, ResourceKey<Enchantment> key,
-                                 Enchantment.Builder builder) {
-        registry.register(key, builder.build(key.location()));
+    private static void registerEnchant(BootstrapContext<Enchantment> context,
+                                        ModEnchantmentEntry entry,
+                                        HolderSet<Item> allowedItems) {
+
+        Enchantment.Builder builder = Enchantment.enchantment(
+                Enchantment.definition(
+                        allowedItems,       // items that can receive the enchantment
+                        allowedItems,       // items affected by the enchantment
+                        entry.getMaxLevel(),
+                        1,                  // rarity weight
+                        Enchantment.dynamicCost(9999, 0),
+                        Enchantment.dynamicCost(9999, 0),
+                        1,                  // minimum level cost multiplier
+                        EquipmentSlotGroup.MAINHAND
+                ));
+
+        context.register(entry.getKey(), builder.build(entry.getKey().location()));
+
+        // Cache the Holder for later use in DropHandler / mixins
+        entry.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(entry.getKey()));
     }
 }
