@@ -8,12 +8,13 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 
 import java.util.stream.Stream;
 
 public class ModTags {
 
-    // Tags
+    // Item Tags
     public static final TagKey<Item> ORE_SENSE_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("ore_sense_items"));
     public static final TagKey<Item> REINFORCEMENT_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("reinforcement_items"));
     public static final TagKey<Item> GATHERING_SPEED_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("gathering_speed_items"));
@@ -23,6 +24,10 @@ public class ModTags {
     public static final TagKey<Item> ATTRACTION_SWORDS = TagKey.create(Registries.ITEM, CatocraftMod.id("attraction_swords"));
     public static final TagKey<Item> PROSPERITY_AFFECTED = TagKey.create(Registries.ITEM, CatocraftMod.id("prosperity_affected"));
     public static final TagKey<Item> ATTRACTION_AFFECTED = TagKey.create(Registries.ITEM, CatocraftMod.id("attraction_affected"));
+
+    // Block Tags
+    public static final TagKey<Block> EMISSIVE_ORES = TagKey.create(Registries.BLOCK, CatocraftMod.id("emissive_ores"));
+
 
     // HolderSets
     public static HolderSet<Item> ORE_SENSE_ITEMS_HOLDER;

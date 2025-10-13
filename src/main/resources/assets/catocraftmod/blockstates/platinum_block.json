@@ -1,8 +1,7 @@
 {
   "variants": {
-    "": [
-      { "model": "catocraftmod:block/platinum_ore" },
-      { "model": "catocraftmod:block/platinum_ore_emissive" }
-    ]
+    "": {
+      "model": "catocraftmod:block/platinum_block"
+    }
   }
 }
