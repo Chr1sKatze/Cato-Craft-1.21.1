@@ -7,7 +7,7 @@
     "ToolDurabilityMixin",
     "AnvilMenuMixin",
     "ServerLevelMixin",
-    "itemStackReinforcementMixin"
+    "ItemStackReinforcementMixin"
   ],
   "injectors": {
     "defaultRequire": 1
