@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "catocraftmod:platinum_ore",
+    "minecraft:iron_ore"
+  ]
+}

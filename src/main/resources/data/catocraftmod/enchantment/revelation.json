@@ -1,7 +1,7 @@
 {
   "anvil_cost": 2,
   "description": {
-    "translate": "enchantment.catocraftmod.ore_sense"
+    "translate": "enchantment.catocraftmod.revelation"
   },
   "max_cost": {
     "base": 50,
@@ -13,6 +13,6 @@
     "per_level_above_first": 10
   },
   "slots": ["mainhand"],
-  "supported_items": "#catocraftmod:ore_sense_items",
+  "supported_items": "#catocraftmod:revelation_items",
   "weight": 5
 }

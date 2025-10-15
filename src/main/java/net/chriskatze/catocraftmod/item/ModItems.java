@@ -27,7 +27,7 @@ public class ModItems {
 
     // ---------------- Crystal Items ----------------
     public static final DeferredItem<Item> GATHERING_CRYSTAL = ITEMS.register("gathering_crystal",
-            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":gathering_speed"),
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":gathering"),
                     new Item.Properties().stacksTo(64)));
 
     public static final DeferredItem<Item> REINFORCEMENT_CRYSTAL = ITEMS.register("reinforcement_crystal",
@@ -42,8 +42,12 @@ public class ModItems {
             () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":attraction"),
                     new Item.Properties().stacksTo(64)));
 
-    public static final DeferredItem<Item> ORE_SENSE_CRYSTAL = ITEMS.register("ore_sense_crystal",
-            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":ore_sense"),
+    public static final DeferredItem<Item> REVELATION_CRYSTAL = ITEMS.register("revelation_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse(CatocraftMod.MOD_ID + ":revelation"),
+                    new Item.Properties().stacksTo(64)));
+
+    public static final DeferredItem<Item> PRESERVATION_CRYSTAL = ITEMS.register("preservation_crystal",
+            () -> new CrystalItem(1, ResourceLocation.tryParse("minecraft:silk_touch"),
                     new Item.Properties().stacksTo(64)));
 
     public static void register(IEventBus eventBus) {

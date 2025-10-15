@@ -6,8 +6,11 @@
     "VillagerTradeExpansionMixin",
     "ToolDurabilityMixin",
     "AnvilMenuMixin",
+    "AnvilScreenDisableRenameMixin",
+    "AnvilScreenHideRenameMixin",
+    "AnvilScreenHideLabelsMixin",
     "ServerLevelMixin",
-    "itemStackReinforcementMixin"
+    "ItemStackReinforcementMixin"
   ],
   "injectors": {
     "defaultRequire": 1

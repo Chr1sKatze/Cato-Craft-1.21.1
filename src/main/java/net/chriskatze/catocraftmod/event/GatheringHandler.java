@@ -13,7 +13,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @EventBusSubscriber(modid = CatocraftMod.MOD_ID)
-public class GatheringSpeedHandler {
+public class GatheringHandler {
 
     @SubscribeEvent
     public static void onBlockBreakSpeed(PlayerEvent.BreakSpeed event) {
@@ -21,16 +21,16 @@ public class GatheringSpeedHandler {
         ItemStack tool = player.getMainHandItem();
 
         // ✅ Check if the tool is tagged for Gathering Speed
-        if (!tool.is(ModTags.GATHERING_SPEED_ITEMS)) {
+        if (!tool.is(ModTags.GATHERING_ITEMS)) {
             return;
         }
 
         // Get the enchantment holder
-        Holder<Enchantment> gatheringSpeedEnchantment = player.level().registryAccess()
+        Holder<Enchantment> gatheringEnchantment = player.level().registryAccess()
                 .registryOrThrow(Registries.ENCHANTMENT)
-                .getHolderOrThrow(ModEnchantments.GATHERING_SPEED.getKey());
+                .getHolderOrThrow(ModEnchantments.GATHERING.getKey());
 
-        int level = EnchantmentHelper.getItemEnchantmentLevel(gatheringSpeedEnchantment, tool);
+        int level = EnchantmentHelper.getItemEnchantmentLevel(gatheringEnchantment, tool);
 
         if (level > 0) {
             float baseSpeed = event.getOriginalSpeed();

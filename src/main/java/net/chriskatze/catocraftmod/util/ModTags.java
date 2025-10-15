@@ -15,9 +15,9 @@ import java.util.stream.Stream;
 public class ModTags {
 
     // Item Tags
-    public static final TagKey<Item> ORE_SENSE_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("ore_sense_items"));
+    public static final TagKey<Item> REVELATION_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("revelation_items"));
     public static final TagKey<Item> REINFORCEMENT_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("reinforcement_items"));
-    public static final TagKey<Item> GATHERING_SPEED_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("gathering_speed_items"));
+    public static final TagKey<Item> GATHERING_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("gathering_items"));
     public static final TagKey<Item> PROSPERITY_TOOLS = TagKey.create(Registries.ITEM, CatocraftMod.id("prosperity_tools"));
     public static final TagKey<Item> PROSPERITY_SWORDS = TagKey.create(Registries.ITEM, CatocraftMod.id("prosperity_swords"));
     public static final TagKey<Item> ATTRACTION_TOOLS = TagKey.create(Registries.ITEM, CatocraftMod.id("attraction_tools"));
@@ -26,13 +26,13 @@ public class ModTags {
     public static final TagKey<Item> ATTRACTION_AFFECTED = TagKey.create(Registries.ITEM, CatocraftMod.id("attraction_affected"));
 
     // Block Tags
-    public static final TagKey<Block> EMISSIVE_ORES = TagKey.create(Registries.BLOCK, CatocraftMod.id("emissive_ores"));
+    public static final TagKey<Block> REVELATION_ORES = TagKey.create(Registries.BLOCK, CatocraftMod.id("revelation_ores"));
 
 
     // HolderSets
-    public static HolderSet<Item> ORE_SENSE_ITEMS_HOLDER;
+    public static HolderSet<Item> REVELATION_ITEMS_HOLDER;
     public static HolderSet<Item> REINFORCEMENT_ITEMS_HOLDER;
-    public static HolderSet<Item> GATHERING_SPEED_ITEMS_HOLDER;
+    public static HolderSet<Item> GATHERING_ITEMS_HOLDER;
     public static HolderSet<Item> PROSPERITY_ITEMS_HOLDER;
     public static HolderSet<Item> ATTRACTION_ITEMS_HOLDER;
     public static HolderSet<Item> PROSPERITY_AFFECTED_HOLDER;
@@ -40,9 +40,9 @@ public class ModTags {
 
     // ------------------- Bootstrap (HolderGetter) -------------------
     public static void initHolderSets(HolderGetter<Item> items) {
-        ORE_SENSE_ITEMS_HOLDER = directFromTag(items, ORE_SENSE_ITEMS);
+        REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
-        GATHERING_SPEED_ITEMS_HOLDER = directFromTag(items, GATHERING_SPEED_ITEMS);
+        GATHERING_ITEMS_HOLDER = directFromTag(items, GATHERING_ITEMS);
         PROSPERITY_ITEMS_HOLDER = directFromTag(items, PROSPERITY_TOOLS, PROSPERITY_SWORDS);
         ATTRACTION_ITEMS_HOLDER = directFromTag(items, ATTRACTION_TOOLS, ATTRACTION_SWORDS);
         PROSPERITY_AFFECTED_HOLDER = directFromTag(items, PROSPERITY_AFFECTED);
@@ -51,9 +51,9 @@ public class ModTags {
 
     // ------------------- Runtime (RegistryLookup) -------------------
     public static void initHolderSets(HolderLookup.RegistryLookup<Item> items) {
-        ORE_SENSE_ITEMS_HOLDER = directFromTag(items, ORE_SENSE_ITEMS);
+        REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
-        GATHERING_SPEED_ITEMS_HOLDER = directFromTag(items, GATHERING_SPEED_ITEMS);
+        GATHERING_ITEMS_HOLDER = directFromTag(items, GATHERING_ITEMS);
         PROSPERITY_ITEMS_HOLDER = directFromTag(items, PROSPERITY_TOOLS, PROSPERITY_SWORDS);
         ATTRACTION_ITEMS_HOLDER = directFromTag(items, ATTRACTION_TOOLS, ATTRACTION_SWORDS);
         PROSPERITY_AFFECTED_HOLDER = directFromTag(items, PROSPERITY_AFFECTED);
@@ -80,12 +80,12 @@ public class ModTags {
     }
 
     // ------------------- Safe getters -------------------
-    public static HolderSet<Item> getOreSenseItemsHolder() {
-        if (ORE_SENSE_ITEMS_HOLDER == null) {
-            CatocraftMod.LOGGER.warn("[Catocraft] ORE_SENSE_ITEMS_HOLDER accessed before initialization!");
+    public static HolderSet<Item> getRevelationItemsHolder() {
+        if (REVELATION_ITEMS_HOLDER == null) {
+            CatocraftMod.LOGGER.warn("[Catocraft] REVELATION_ITEMS_HOLDER accessed before initialization!");
             return HolderSet.direct();
         }
-        return ORE_SENSE_ITEMS_HOLDER;
+        return REVELATION_ITEMS_HOLDER;
     }
 
     public static HolderSet<Item> getReinforcementItemsHolder() {
@@ -96,12 +96,12 @@ public class ModTags {
         return REINFORCEMENT_ITEMS_HOLDER;
     }
 
-    public static HolderSet<Item> getGatheringSpeedItemsHolder() {
-        if (GATHERING_SPEED_ITEMS_HOLDER == null) {
-            CatocraftMod.LOGGER.warn("[Catocraft] GATHERING_SPEED_ITEMS_HOLDER accessed before initialization!");
+    public static HolderSet<Item> getGatheringItemsHolder() {
+        if (GATHERING_ITEMS_HOLDER == null) {
+            CatocraftMod.LOGGER.warn("[Catocraft] GATHERING_ITEMS_HOLDER accessed before initialization!");
             return HolderSet.direct();
         }
-        return GATHERING_SPEED_ITEMS_HOLDER;
+        return GATHERING_ITEMS_HOLDER;
     }
 
     public static HolderSet<Item> getProsperityItemsHolder() {

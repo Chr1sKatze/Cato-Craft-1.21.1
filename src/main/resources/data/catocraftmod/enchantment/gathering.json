@@ -1,7 +1,7 @@
 {
   "anvil_cost": 1,
   "description": {
-    "translate": "enchantment.catocraftmod.gathering_speed"
+    "translate": "enchantment.catocraftmod.gathering"
   },
   "effects": {
     "minecraft:attributes": [
@@ -12,7 +12,7 @@
           "per_level_above_first": 1
         },
         "attribute": "minecraft:player.mining_efficiency",
-        "id": "catocraftmod:enchantment.gathering_speed",
+        "id": "catocraftmod:enchantment.gathering",
         "operation": "add_value"
       }
     ]

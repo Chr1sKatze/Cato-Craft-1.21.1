@@ -180,9 +180,9 @@ public class CatocraftMod {
 
         ModEnchantments.PROSPERITY.setHolder(enchants.get(ModEnchantments.PROSPERITY.getKey()).orElseThrow());
         ModEnchantments.ATTRACTION.setHolder(enchants.get(ModEnchantments.ATTRACTION.getKey()).orElseThrow());
-        ModEnchantments.GATHERING_SPEED.setHolder(enchants.get(ModEnchantments.GATHERING_SPEED.getKey()).orElseThrow());
+        ModEnchantments.GATHERING.setHolder(enchants.get(ModEnchantments.GATHERING.getKey()).orElseThrow());
         ModEnchantments.REINFORCEMENT.setHolder(enchants.get(ModEnchantments.REINFORCEMENT.getKey()).orElseThrow());
-        ModEnchantments.ORE_SENSE.setHolder(enchants.get(ModEnchantments.ORE_SENSE.getKey()).orElseThrow());
+        ModEnchantments.REVELATION.setHolder(enchants.get(ModEnchantments.REVELATION.getKey()).orElseThrow());
 
         LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized at server start.");
     }

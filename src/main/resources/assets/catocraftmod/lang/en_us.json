@@ -23,17 +23,19 @@
   "creativetab.catocraftmod.items": "Cato-Craft Items",
   "creativetab.catocraftmod.blocks": "Cato-Craft Blocks",
 
-  "enchantment.catocraftmod.gathering_speed": "§f\uF934§r Gathering Speed",
+  "enchantment.catocraftmod.gathering_speed": "§f\uF934§r Gathering",
   "enchantment.catocraftmod.reinforcement": "§f\uF934§r Reinforcement",
   "enchantment.catocraftmod.prosperity": "§f\uF934§r Prosperity",
   "enchantment.catocraftmod.attraction": "§f\uF934§r Attraction",
-  "enchantment.catocraftmod.ore_sense": "Ore Sense",
+  "enchantment.catocraftmod.revelation": "§f老§r Revelation",
+  "enchantment.minecraft.silk_touch": "Preservation",
 
-  "item.catocraftmod.gathering_crystal": "Gathering Speed Crystal",
+  "item.catocraftmod.gathering_crystal": "Gathering Crystal",
   "item.catocraftmod.reinforcement_crystal": "Reinforcement Crystal",
   "item.catocraftmod.prosperity_crystal": "Prosperity Crystal",
   "item.catocraftmod.attraction_crystal": "Attraction Crystal",
-  "item.catocraftmod.ore_sense_crystal": "Ore Sense Crystal",
+  "item.catocraftmod.revelation_crystal": "Revelation Crystal",
+  "item.catocraftmod.preservation_crystal": "Preservation Crystal",
 
   "enchantment.level.1": "I",
   "enchantment.level.2": "II",

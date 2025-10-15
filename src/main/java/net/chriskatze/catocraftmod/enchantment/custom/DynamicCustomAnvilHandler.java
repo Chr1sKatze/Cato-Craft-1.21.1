@@ -9,10 +9,15 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,166 +30,189 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Handles dynamic custom anvil behavior:
+ * - Repairing items based on custom config
+ * - Applying custom enchantments via CrystalItem or normal enchanted books
+ * - Sending one-time error messages to the player
+ *
+ * This class intercepts the AnvilUpdateEvent from NeoForged and applies
+ * custom rules for repair, enchantments, and crystals.
+ */
 @EventBusSubscriber(modid = CatocraftMod.MOD_ID)
 public class DynamicCustomAnvilHandler {
 
+    // ---------------- Tag for identifying items that can be enchanted with crystals ----------------
+    private static final TagKey<Item> ALLOWED_CRYSTAL_TARGETS = ItemTags.create(
+            ResourceLocation.tryParse("catocraftmod:enchantable_crystal_items")
+    );
+
+    // ---------------- Caches to prevent sending duplicate messages to the player ----------------
     private static final Map<String, Set<String>> sentMessages = new HashMap<>();
     private static String lastLeftHash = "";
     private static String lastRightHash = "";
 
+    /**
+     * Main handler for the anvil update event.
+     * This method applies repair logic, enchantment logic (both crystals and books),
+     * and ensures max enchantment limits are respected.
+     */
     @SubscribeEvent
     public static void onAnvilUpdate(AnvilUpdateEvent event) {
-        ItemStack left = event.getLeft();
-        ItemStack right = event.getRight();
+        ItemStack left = event.getLeft();      // Left item in anvil (item being modified)
+        ItemStack right = event.getRight();    // Right item in anvil (material or enchanted book)
         Player player = event.getPlayer();
 
-        if (left.isEmpty()) return;
+        if (left.isEmpty()) return;  // Nothing to do if left item is empty
 
+        // Reset message cache if left or right items changed
         resetMessageCacheIfChanged(left, right);
 
+        // Create a copy of the left item to serve as the resulting item
         ItemStack result = left.copy();
-        boolean operationSuccess = false;
-        int materialCost = 0;
-        String enchantmentErrorMessage = null;
+        boolean operationSuccess = false;   // Tracks if any operation was successful
+        int materialCost = 0;               // Tracks number of materials used
+
+        Level world = player.getCommandSenderWorld();
+        var lookup = world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+
+        // Use NeoForged extensions to read all enchantments from items
+        IItemStackExtension leftExt = (IItemStackExtension) left;
+        IItemStackExtension rightExt = (IItemStackExtension) right;
+
+        ItemEnchantments leftEnchants = leftExt.getAllEnchantments(lookup);
+        ItemEnchantments rightEnchants = rightExt.getAllEnchantments(lookup);
+
+        // If right item has no enchantments, check for stored enchantments (like empty books)
+        if (rightEnchants.isEmpty()) {
+            ItemEnchantments stored = right.getOrDefault(
+                    net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY
+            );
+            if (!stored.isEmpty()) rightEnchants = stored;
+        }
+
+        // Mutable copy to apply changes without altering original items
+        ItemEnchantments.Mutable merged = new ItemEnchantments.Mutable(leftEnchants);
+
+        // Maximum number of unique enchantments allowed for this item (from config)
+        int maxEnchantments = AnvilConfig.getMaxEnchantments(left.getItem());
+        boolean rightWasCrystal = false;  // Tracks whether the right item is a CrystalItem
 
         // ---------------- Repair logic ----------------
         AnvilConfig.RepairInfo repairInfo = AnvilConfig.getRepairInfo(left.getItem());
         if (repairInfo != null && !right.isEmpty() && right.getItem() == repairInfo.repairItem) {
             int damage = left.getDamageValue();
-            int usableItems = (int) Math.min(Math.ceil(damage / (left.getMaxDamage() * repairInfo.repairPercentage)), right.getCount());
+            int usableItems = (int) Math.min(
+                    Math.ceil(damage / (left.getMaxDamage() * repairInfo.repairPercentage)),
+                    right.getCount()
+            );
+
             if (usableItems > 0) {
-                int totalRepair = Math.min((int) Math.round(left.getMaxDamage() * repairInfo.repairPercentage * usableItems), damage);
+                int totalRepair = Math.min(
+                        (int) Math.round(left.getMaxDamage() * repairInfo.repairPercentage * usableItems),
+                        damage
+                );
                 result.setDamageValue(damage - totalRepair);
                 materialCost += usableItems;
                 operationSuccess = true;
             }
         }
 
-        // ---------------- Enchantment logic ----------------
-        if (!right.isEmpty()) {
-            Level world = player.getCommandSenderWorld();
-            var lookup = world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        // ---------------- Handle CrystalItem ----------------
+        if (right.getItem() instanceof CrystalItem crystal) {
+            rightWasCrystal = true;
 
-            IItemStackExtension leftExt = (IItemStackExtension) left;
-            IItemStackExtension rightExt = (IItemStackExtension) right;
-
-            ItemEnchantments leftEnchants = leftExt.getAllEnchantments(lookup);
-            ItemEnchantments rightEnchants = rightExt.getAllEnchantments(lookup);
-
-            // If right is an empty enchanted book with stored enchantments, use stored
-            if (rightEnchants.isEmpty()) {
-                ItemEnchantments stored = right.getOrDefault(
-                        net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY
-                );
-                if (!stored.isEmpty()) rightEnchants = stored;
+            // Only certain items can be enchanted with crystals
+            if (!left.is(ALLOWED_CRYSTAL_TARGETS)) {
+                cancelAnvilOperation(event, player, left, right, "This item cannot be enchanted with crystals!");
+                return;
             }
 
-            ItemEnchantments.Mutable merged = new ItemEnchantments.Mutable(leftEnchants);
-            int maxEnchantments = AnvilConfig.getMaxEnchantments(left.getItem());
+            ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, crystal.getEnchantmentId());
+            Holder<Enchantment> targetEnch = lookup.get(key)
+                    .orElseThrow(() -> new IllegalStateException("Missing enchantment: " + crystal.getEnchantmentId()));
 
-            boolean rightWasCrystal = false;
+            int currentLevel = merged.getLevel(targetEnch);
+            int maxLevel = targetEnch.value().getMaxLevel();
+            boolean isNewEnchantment = currentLevel == 0;
+            long uniqueCount = merged.keySet().stream().filter(h -> merged.getLevel(h) > 0).count();
 
-            // ----------- Handle any CrystalItem -----------
-            if (right.getItem() instanceof CrystalItem crystal) {
-                rightWasCrystal = true;
-
-                // Look up the target enchantment via the crystal's ID
-                ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, crystal.getEnchantmentId());
-                Holder<Enchantment> targetEnch = lookup.get(key)
-                        .orElseThrow(() -> new IllegalStateException("Missing enchantment: " + crystal.getEnchantmentId()));
-
-                int currentLevel = leftEnchants.getLevel(targetEnch);
-                int maxLevel = targetEnch.value().getMaxLevel();
-
-                if (currentLevel >= maxLevel) {
-                    enchantmentErrorMessage = right.getHoverName().getString() + " enchantment is already at maximum";
-                    operationSuccess = false;
-                    materialCost = 0;
-                    event.setOutput(ItemStack.EMPTY);
-                    event.setCanceled(true);
-                } else {
-                    // Calculate how many levels we can actually apply
-                    int toApply = Math.min(right.getCount() * crystal.getLevel(), maxLevel - currentLevel);
-
-                    // Full crystals consumed and leftover levels
-                    int fullCrystalsUsed = toApply / crystal.getLevel();
-                    int remainderLevel = toApply % crystal.getLevel();
-
-                    int finalLevel = currentLevel + toApply;
-                    merged.set(targetEnch, finalLevel);
-                    operationSuccess = true;
-
-                    // NeoForge will automatically consume the number of items
-                    materialCost = fullCrystalsUsed + (remainderLevel > 0 ? 1 : 0);
-                }
+            // Check if adding a new unique enchantment would exceed max
+            if (isNewEnchantment && uniqueCount >= maxEnchantments) {
+                cancelAnvilOperation(event, player, left, right,
+                        "Cannot add more unique enchantments to " + left.getHoverName().getString());
+                return;
+            }
+            // Check if this enchantment is already at its max level
+            else if (currentLevel >= maxLevel) {
+                cancelAnvilOperation(event, player, left, right,
+                        right.getHoverName().getString() + " enchantment is already at maximum");
+                return;
             }
 
-            // ----------- Handle vanilla enchanted books as before -----------
-            if (!rightWasCrystal) {
-                for (Object2IntMap.Entry<Holder<Enchantment>> entry : rightEnchants.entrySet()) {
-                    Holder<Enchantment> ench = entry.getKey();
-                    int bookLevel = entry.getIntValue();
-                    int currentLevel = leftEnchants.getLevel(ench);
+            // Determine how many crystals to apply without exceeding max level
+            int remaining = maxLevel - currentLevel;
+            int crystalsToApply = Math.min(right.getCount(), (int) Math.ceil((double) remaining / crystal.getLevel()));
+            int finalLevel = Math.min(currentLevel + crystalsToApply * crystal.getLevel(), maxLevel);
+            merged.set(targetEnch, finalLevel);
 
-                    boolean canApply = ench.value().definition().supportedItems().stream().anyMatch(left::is);
-                    if (!canApply) continue;
-
-                    boolean isNew = currentLevel == 0;
-                    long uniqueCount = leftEnchants.keySet().stream()
-                            .filter(h -> leftEnchants.getLevel(h) > 0).count();
-
-                    if (isNew && uniqueCount >= maxEnchantments) {
-                        enchantmentErrorMessage = "Cannot add more unique enchantments to " + left.getHoverName().getString();
-                        continue;
-                    }
-
-                    int newLevel = Math.min(currentLevel + bookLevel, ench.value().getMaxLevel());
-                    if (newLevel > currentLevel) {
-                        merged.set(ench, newLevel);
-                        operationSuccess = true;
-                    } else if (currentLevel >= ench.value().getMaxLevel()) {
-                        enchantmentErrorMessage = getEnchantmentName(ench) + " enchantment limit reached";
-                    }
-                }
-            }
-
-            // Apply merged enchantments if any operation succeeded
-            if (operationSuccess) {
-                EnchantmentHelper.setEnchantments(result, merged.toImmutable());
-            } else if (!rightWasCrystal) { // Only cancel if right is a normal book and no enchantments applied
-                result = ItemStack.EMPTY;
-                event.setCanceled(true);
-            }
-        }
-
-        // ---------------- Renaming logic ----------------
-        if (event.getName() != null && !event.getName().isEmpty() && right.isEmpty() && !result.isEmpty()) {
-            result.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(event.getName()));
             operationSuccess = true;
+            materialCost = crystalsToApply;
         }
 
-        // ---------------- Send error messages ----------------
-        if (enchantmentErrorMessage != null) {
-            sendPlayerMessageOnce(player, makePid(player, left, right), enchantmentErrorMessage);
+        // ---------------- Handle vanilla enchanted books ----------------
+        if (!rightWasCrystal) {
+            for (Object2IntMap.Entry<Holder<Enchantment>> entry : rightEnchants.entrySet()) {
+                Holder<Enchantment> ench = entry.getKey();
+                int bookLevel = entry.getIntValue();
+                int currentLevel = merged.getLevel(ench);
+
+                // Skip if enchantment cannot apply to this item
+                boolean canApply = ench.value().definition().supportedItems().stream().anyMatch(left::is);
+                if (!canApply) continue;
+
+                boolean isNew = currentLevel == 0;
+                long uniqueCount = merged.keySet().stream().filter(h -> merged.getLevel(h) > 0).count();
+
+                // Check if adding a new unique enchantment would exceed max
+                if (isNew && uniqueCount >= maxEnchantments) {
+                    cancelAnvilOperation(event, player, left, right,
+                            "Cannot add more unique enchantments to " + left.getHoverName().getString());
+                    return;
+                }
+
+                // Apply enchantment without exceeding max level
+                int newLevel = Math.min(currentLevel + bookLevel, ench.value().getMaxLevel());
+                if (newLevel > currentLevel) {
+                    merged.set(ench, newLevel);
+                    operationSuccess = true;
+                } else if (currentLevel >= ench.value().getMaxLevel()) {
+                    cancelAnvilOperation(event, player, left, right,
+                            getEnchantmentName(ench) + " enchantment limit reached");
+                    return;
+                }
+            }
         }
 
-        // ---------------- Finalize ----------------
-        if (!operationSuccess) {
+        // ---------------- Finalize result ----------------
+        if (operationSuccess) {
+            EnchantmentHelper.setEnchantments(result, merged.toImmutable());
+        } else if (!rightWasCrystal) {
             result = ItemStack.EMPTY;
             event.setCanceled(true);
-            event.setCost(0);
-            event.setMaterialCost(0);
-        } else {
-            event.setCost(1);
-            event.setMaterialCost(materialCost);
         }
 
         event.setOutput(result);
+        event.setCost(operationSuccess ? 1 : 0);
+        event.setMaterialCost(operationSuccess ? materialCost : 0);
     }
 
+    // ---------------- Helper Methods ----------------
 
-    // ---------------- HELPERS ----------------
-
+    /**
+     * Resets message cache if left/right items have changed.
+     * This prevents spamming players with repeated messages.
+     */
     private static void resetMessageCacheIfChanged(ItemStack left, ItemStack right) {
         String leftHash = String.valueOf(left.hashCode());
         String rightHash = right.isEmpty() ? "" : String.valueOf(right.hashCode());
@@ -195,6 +223,9 @@ public class DynamicCustomAnvilHandler {
         }
     }
 
+    /**
+     * Sends a message to the player only once per operation.
+     */
     private static void sendPlayerMessageOnce(Player player, String pid, String message) {
         if (player.level().isClientSide) return;
 
@@ -203,16 +234,33 @@ public class DynamicCustomAnvilHandler {
 
         if (!messagesForPid.contains(message)) {
             player.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
-            messagesForPid.add(message); // add AFTER sending
+            messagesForPid.add(message);
         }
     }
 
+    /**
+     * Generates a unique ID for the player + item combination to track sent messages.
+     */
     private static String makePid(Player player, ItemStack left, ItemStack right) {
         String leftHash = String.valueOf(left.hashCode());
         String rightHash = right.isEmpty() ? "" : String.valueOf(right.hashCode());
         return player.getUUID() + "-" + leftHash + "-" + rightHash;
     }
 
+    /**
+     * Cancels the current anvil operation and sends a message to the player.
+     */
+    private static void cancelAnvilOperation(AnvilUpdateEvent event, Player player, ItemStack left, ItemStack right, String message) {
+        event.setOutput(ItemStack.EMPTY);
+        event.setCanceled(true);
+        event.setCost(0);
+        event.setMaterialCost(0);
+        sendPlayerMessageOnce(player, makePid(player, left, right), message);
+    }
+
+    /**
+     * Converts an Enchantment Holder into a human-readable name.
+     */
     private static String getEnchantmentName(Holder<Enchantment> ench) {
         String path = ench.unwrapKey().map(k -> k.location().getPath()).orElse("unknown_enchantment");
         String[] parts = path.split("_");
