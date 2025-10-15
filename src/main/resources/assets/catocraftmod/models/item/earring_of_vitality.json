@@ -1,0 +1,4 @@
+{
+  "parent": "item/generated",
+  "textures": { "layer0": "catocraftmod:item/earring_of_vitality" }
+}

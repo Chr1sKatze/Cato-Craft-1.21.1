@@ -1,7 +1,12 @@
 package net.chriskatze.catocraftmod.item;
 
+import com.google.common.collect.ImmutableMultimap;
 import net.chriskatze.catocraftmod.CatocraftMod;
+import net.chriskatze.catocraftmod.util.ModAttributes;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -49,6 +54,17 @@ public class ModItems {
     public static final DeferredItem<Item> PRESERVATION_CRYSTAL = ITEMS.register("preservation_crystal",
             () -> new CrystalItem(1, ResourceLocation.tryParse("minecraft:silk_touch"),
                     new Item.Properties().stacksTo(64)));
+
+    // ---------------- Jewellery Items ----------------
+    public static final DeferredItem<Item> EARRING_OF_VITALITY = ITEMS.register("earring_of_vitality",
+            () -> new JewelleryItem(
+                    new Item.Properties()
+                            .stacksTo(1)
+                            .rarity(net.minecraft.world.item.Rarity.UNCOMMON),
+                    ImmutableMultimap.<Holder<Attribute>, AttributeModifier>builder()
+                            .put(ModAttributes.MAX_HEALTH, ModAttributes.add("earring_vitality_health", 4.0))
+                            .build()
+            ));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

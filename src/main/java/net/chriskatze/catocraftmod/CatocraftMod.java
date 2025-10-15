@@ -6,6 +6,7 @@ import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
+import net.chriskatze.catocraftmod.menu.ModMenus;
 import net.chriskatze.catocraftmod.network.NetworkHandler;
 import net.chriskatze.catocraftmod.sound.ModSounds;
 import net.chriskatze.catocraftmod.tooltip.ClientTooltipHandler;
@@ -14,7 +15,6 @@ import net.chriskatze.catocraftmod.villager.ModVillagers;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -27,12 +27,15 @@ import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
+/**
+ * Main mod entrypoint for CatoCraft.
+ * Handles registration of content, capabilities, networking, and events.
+ */
 @Mod(CatocraftMod.MOD_ID)
 public class CatocraftMod {
     public static final String MOD_ID = "catocraftmod";
@@ -43,112 +46,48 @@ public class CatocraftMod {
     }
 
     public CatocraftMod(IEventBus modEventBus, ModContainer modContainer) {
-
-        // Register events
+        // ------------------- Core lifecycle listeners -------------------
         modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(NetworkHandler::register);
+        modEventBus.addListener(NetworkHandler::register); // Network packet registration
         NeoForge.EVENT_BUS.register(this);
 
-        // Register deferred content
+        // ------------------- Content registration -------------------
+        ModMenus.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModVillagers.register(modEventBus);
         ModSounds.register(modEventBus);
 
-        // Creative tab listener
+        // ------------------- Creative tab setup -------------------
         modEventBus.addListener(this::addCreative);
 
-        // Config
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
-        // Dependency check
+        // ------------------- Dependency check -------------------
         checkDependencies();
 
-        // ---------------- Client-side registration ----------------
+// ------------------- Client-only registrations -------------------
         if (FMLLoader.getDist().isClient()) {
             NeoForge.EVENT_BUS.register(ClientTooltipHandler.class);
-            // Register OreGlowRenderer texture reload listener
             OreGlowRenderer.registerReloadListener();
         }
     }
 
-    private void checkDependencies() {
-        // Core / common mods
-        requireMinVersion("spell_engine", "1.8.2", true);
-        requireMinVersion("spell_power", "1.4.0", true);
-        requireMinVersion("fabric_api", "0.115.6+2.1.1+1.21.1", true);
-        requireMinVersion("accessories", "1.1.0-beta.52", true);
-
-        // Client-only mods
-        if (FMLLoader.getDist().isClient()) {
-            requireMinVersion("playeranimator", "2.0.1", true);
-        }
-    }
-
-    /**
-     * Checks that the mod is loaded and meets the minimum version.
-     *
-     * @param modId The exact mod ID.
-     * @param minVersion Minimum required version (e.g., "15.0.140").
-     * @param mandatory True if the mod must be present, false if optional.
-     */
-    private void requireMinVersion(String modId, String minVersion, boolean mandatory) {
-        ModList mods = ModList.get();
-
-        mods.getModContainerById(modId).ifPresentOrElse(container -> {
-            String loadedVersion = container.getModInfo().getVersion().toString();
-            if (compareVersions(loadedVersion, minVersion) < 0) {
-                throw new RuntimeException(
-                        String.format("❌ CatoCraft requires %s %s+, but found %s. Please update the mod.",
-                                modId, minVersion, loadedVersion)
-                );
-            }
-        }, () -> {
-            if (mandatory) {
-                throw new RuntimeException(
-                        String.format("❌ CatoCraft requires %s %s+, but it is missing!", modId, minVersion)
-                );
-            } else {
-                LOGGER.warn("⚠ Optional mod {} {}+ is missing, skipping.", modId, minVersion);
-            }
+    // ---------------------------------------------------------------------
+    // Setup Phase
+    // ---------------------------------------------------------------------
+    private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            // Load your custom JSON config
+            AnvilConfig.loadConfig();
+            LOGGER.info("[CatocraftMod] Loaded Anvil JSON configuration.");
         });
     }
 
-    /**
-     * Compares two version strings like "15.0.140" or "0.12.15-beta.1".
-     * Returns negative if current < required, zero if equal, positive if current > required.
-     */
-    private int compareVersions(String current, String required) {
-        // Strip non-digit prefixes like "+", "-beta" for comparison
-        String[] currParts = current.replaceAll("[^0-9.]", "").split("\\.");
-        String[] reqParts = required.replaceAll("[^0-9.]", "").split("\\.");
-
-        int length = Math.max(currParts.length, reqParts.length);
-        for (int i = 0; i < length; i++) {
-            int curr = i < currParts.length ? parseIntSafe(currParts[i]) : 0;
-            int req = i < reqParts.length ? parseIntSafe(reqParts[i]) : 0;
-            if (curr != req) return curr - req;
-        }
-        return 0;
-    }
-
-    /** Safely parses integers, returns 0 on failure. */
-    private int parseIntSafe(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
-
-        AnvilConfig.loadConfig();
-    }
-
+    // ---------------------------------------------------------------------
+    // Creative Tab Content
+    // ---------------------------------------------------------------------
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if(event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL_INGOT);
             event.accept(ModItems.STEEL_NUGGET);
             event.accept(ModItems.RAW_STEEL);
@@ -157,26 +96,88 @@ public class CatocraftMod {
             event.accept(ModItems.RAW_PLATINUM);
         }
 
-        if(event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModBlocks.STEEL_BLOCK);
             event.accept(ModBlocks.PLATINUM_BLOCK);
         }
 
-        if(event.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
+        if (event.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
             event.accept(ModBlocks.PLATINUM_ORE);
             event.accept(ModBlocks.PLATINUM_DEEPSLATE_ORE);
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Dependency Checking
+    // ---------------------------------------------------------------------
+    private void checkDependencies() {
+        requireMinVersion("spell_power", "1.4.0", true);
+        requireMinVersion("fabric_api", "0.115.6+2.1.1+1.21.1", true);
+
+        if (FMLLoader.getDist().isClient()) {
+            requireMinVersion("playeranimator", "2.0.1", true);
+        }
+    }
+
+    private void requireMinVersion(String modId, String minVersion, boolean mandatory) {
+        ModList mods = ModList.get();
+        mods.getModContainerById(modId).ifPresentOrElse(container -> {
+            String loadedVersion = container.getModInfo().getVersion().toString();
+            if (compareVersions(loadedVersion, minVersion) < 0) {
+                throw new RuntimeException(String.format(
+                        "❌ CatoCraft requires %s %s+, but found %s. Please update.",
+                        modId, minVersion, loadedVersion
+                ));
+            }
+        }, () -> {
+            if (mandatory) {
+                throw new RuntimeException(String.format(
+                        "❌ CatoCraft requires %s %s+, but it is missing!",
+                        modId, minVersion
+                ));
+            } else {
+                LOGGER.warn("⚠ Optional mod {} {}+ is missing, skipping.", modId, minVersion);
+            }
+        });
+    }
+
+    private int compareVersions(String current, String required) {
+        String[] currParts = current.replaceAll("[^0-9.]", "").split("\\.");
+        String[] reqParts = required.replaceAll("[^0-9.]", "").split("\\.");
+
+        int len = Math.max(currParts.length, reqParts.length);
+        for (int i = 0; i < len; i++) {
+            int c = i < currParts.length ? parseIntSafe(currParts[i]) : 0;
+            int r = i < reqParts.length ? parseIntSafe(reqParts[i]) : 0;
+            if (c != r) return c - r;
+        }
+        return 0;
+    }
+
+    private int parseIntSafe(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Server Events
+    // ---------------------------------------------------------------------
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        // ------------------- Item Holders from tags -------------------
+        // Reload config safely at server start
+        AnvilConfig.loadConfig();
+
+        // ------------------- Item Holders -------------------
         HolderLookup.RegistryLookup<Item> items = event.getServer().registryAccess().lookupOrThrow(Registries.ITEM);
         ModTags.initHolderSets(items);
-        LOGGER.info("[CatocraftMod] ModTags HolderSets initialized at server start.");
+        LOGGER.info("[CatocraftMod] ModTags HolderSets initialized.");
 
-        // ------------------- Enchantment Holders -------------------
-        HolderLookup.RegistryLookup<Enchantment> enchants = event.getServer().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        // ------------------- Enchantments -------------------
+        HolderLookup.RegistryLookup<Enchantment> enchants =
+                event.getServer().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 
         ModEnchantments.PROSPERITY.setHolder(enchants.get(ModEnchantments.PROSPERITY.getKey()).orElseThrow());
         ModEnchantments.ATTRACTION.setHolder(enchants.get(ModEnchantments.ATTRACTION.getKey()).orElseThrow());
@@ -184,6 +185,6 @@ public class CatocraftMod {
         ModEnchantments.REINFORCEMENT.setHolder(enchants.get(ModEnchantments.REINFORCEMENT.getKey()).orElseThrow());
         ModEnchantments.REVELATION.setHolder(enchants.get(ModEnchantments.REVELATION.getKey()).orElseThrow());
 
-        LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized at server start.");
+        LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized.");
     }
 }

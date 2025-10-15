@@ -37,6 +37,9 @@
   "item.catocraftmod.revelation_crystal": "Revelation Crystal",
   "item.catocraftmod.preservation_crystal": "Preservation Crystal",
 
+  "item.catocraftmod.earring_of_vitality": "Earring of Vitality",
+  "item.modifiers.catocraftmod.earring": "When equipped (Earring Slot):",
+
   "enchantment.level.1": "I",
   "enchantment.level.2": "II",
   "enchantment.level.3": "III",

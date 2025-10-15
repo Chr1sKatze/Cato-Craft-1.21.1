@@ -1,53 +1,54 @@
 package net.chriskatze.catocraftmod.network;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * Handles network registration for the Catocraft mod.
- *
- * Responsible for defining unique packet IDs and registering
- * the packet handlers that sync server-to-client data.
+ * Central registration for all Catocraft network packets.
  */
 public class NetworkHandler {
 
-    // ---------------------------------------------------------------------
-    // Packet Identifiers
-    // ---------------------------------------------------------------------
+    public static final ResourceLocation REVELATION_GLOW_ID =
+            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "revelation_glow");
 
-    /**
-     * Unique ResourceLocation for the Revelation Glow packet.
-     * Used to identify the packet type when sending data from server to client.
-     */
-    public static final ResourceLocation REVELATION_GLOW_ID = ResourceLocation.fromNamespaceAndPath(
-            CatocraftMod.MOD_ID, "revelation_glow"
-    );
-
-    // ---------------------------------------------------------------------
-    // Packet Registration
-    // ---------------------------------------------------------------------
-
-    /**
-     * Registers all custom network packet handlers.
-     *
-     * @param event Event provided by NeoForge to register payload handlers
-     */
     public static void register(final RegisterPayloadHandlersEvent event) {
-        /*
-         * Create a registrar for this mod's packets:
-         * - versioned("1") indicates the protocol version of this packet handler.
-         *   This allows future updates to maintain backward compatibility.
-         * - optional() means that the registration will not fail if the client
-         *   does not have this mod installed (useful for optional mods or cross-play).
-         */
-        var registrar = event.registrar(CatocraftMod.MOD_ID).versioned("1").optional();
+        PayloadRegistrar registrar = event.registrar(CatocraftMod.MOD_ID)
+                .versioned("1")
+                .optional();
 
-        // Register OreSenseGlowPacket for sending from server to client
+        // 1️⃣ RevelationGlowPacket (server → client)
         registrar.playToClient(
-                RevelationGlowPacket.TYPE,    // Packet type
-                RevelationGlowPacket.STREAM_CODEC, // Serialization codec
-                RevelationGlowPacket::handle // Client-side handler method
+                RevelationGlowPacket.TYPE,
+                RevelationGlowPacket.STREAM_CODEC,
+                RevelationGlowPacket::handle
         );
+
+        // 2️⃣ EarringSyncPacket (server → client)
+        registrar.playToClient(
+                EarringSyncPacket.TYPE,
+                EarringSyncPacket.STREAM_CODEC,
+                EarringSyncPacket::handle
+        );
+
+        // 3️⃣ OpenEarringMenuPacket (client → server)
+        registrar.playToServer(
+                OpenEarringMenuPacket.TYPE,
+                OpenEarringMenuPacket.STREAM_CODEC,
+                OpenEarringMenuPacket::handle
+        );
+
+        CatocraftMod.LOGGER.info(
+                "[NetworkHandler] Registered packets: revelation_glow, earring_sync, open_earring_menu, earring_slot_changed"
+        );
+    }
+
+    /** Utility for sending to one specific player (server → client). */
+    public static void sendToPlayer(ServerPlayer player, CustomPacketPayload packet) {
+        PacketDistributor.sendToPlayer(player, packet);
     }
 }

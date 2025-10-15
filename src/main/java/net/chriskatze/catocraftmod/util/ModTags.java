@@ -14,6 +14,9 @@ import java.util.stream.Stream;
 
 public class ModTags {
 
+    // Jewelelry items
+    public static final TagKey<Item> EARRINGS = TagKey.create(Registries.ITEM, CatocraftMod.id("earrings"));
+
     // Item Tags
     public static final TagKey<Item> REVELATION_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("revelation_items"));
     public static final TagKey<Item> REINFORCEMENT_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("reinforcement_items"));
@@ -30,6 +33,8 @@ public class ModTags {
 
 
     // HolderSets
+    public static HolderSet<Item> EARRINGS_HOLDER;
+
     public static HolderSet<Item> REVELATION_ITEMS_HOLDER;
     public static HolderSet<Item> REINFORCEMENT_ITEMS_HOLDER;
     public static HolderSet<Item> GATHERING_ITEMS_HOLDER;
@@ -40,6 +45,8 @@ public class ModTags {
 
     // ------------------- Bootstrap (HolderGetter) -------------------
     public static void initHolderSets(HolderGetter<Item> items) {
+        EARRINGS_HOLDER = directFromTag(items, EARRINGS);
+
         REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
         GATHERING_ITEMS_HOLDER = directFromTag(items, GATHERING_ITEMS);
@@ -51,6 +58,8 @@ public class ModTags {
 
     // ------------------- Runtime (RegistryLookup) -------------------
     public static void initHolderSets(HolderLookup.RegistryLookup<Item> items) {
+        EARRINGS_HOLDER = directFromTag(items, EARRINGS);
+
         REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
         GATHERING_ITEMS_HOLDER = directFromTag(items, GATHERING_ITEMS);
