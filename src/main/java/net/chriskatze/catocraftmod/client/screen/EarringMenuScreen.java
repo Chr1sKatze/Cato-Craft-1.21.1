@@ -1,13 +1,20 @@
 package net.chriskatze.catocraftmod.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.menu.EarringMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
+/**
+ * Renders the Earring Menu with the extra earring slot and a small
+ * visual safety guard against ghost crafting results.
+ */
 public class EarringMenuScreen extends AbstractContainerScreen<EarringMenu> {
 
     private static final ResourceLocation VANILLA_INVENTORY =
@@ -21,6 +28,9 @@ public class EarringMenuScreen extends AbstractContainerScreen<EarringMenu> {
         this.imageHeight = 166;
     }
 
+    // ------------------------------------------------------------
+    //  🔹 Background Rendering
+    // ------------------------------------------------------------
     @Override
     protected void renderBg(GuiGraphics gfx, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
@@ -35,13 +45,58 @@ public class EarringMenuScreen extends AbstractContainerScreen<EarringMenu> {
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderTexture(0, SLOT_TEXTURE);
 
-        int slotX = x + 78;  // 7–8 pixels from the left edge (same as armor)
-        int slotY = y + 8;  // aligned vertically with helmet slot
+        int slotX = x + 78; // aligned with your menu slot
+        int slotY = y + 8;
         gfx.blit(SLOT_TEXTURE, slotX, slotY, 0, 0, 18, 18, 18, 18);
 
         RenderSystem.disableBlend();
     }
 
+    // ------------------------------------------------------------
+    //  🔹 Ghost Item Cleanup (runs once per tick while screen is open)
+    // ------------------------------------------------------------
+    @Override
+    public void containerTick() {
+        super.containerTick();
+
+        if (menu == null || menu.slots.size() <= EarringMenu.EARRING_SLOT_INDEX)
+            return;
+
+        try {
+            Slot resultSlot = menu.slots.get(0); // crafting result slot
+            Slot earringSlot = menu.slots.get(menu.EARRING_SLOT_INDEX);
+            ItemStack resultStack = resultSlot.getItem();
+            ItemStack earringStack = earringSlot.getItem();
+
+            // Skip if there's no ghost risk
+            if (resultStack.isEmpty() || earringStack.isEmpty()) return;
+
+            // ✅ Only clear if:
+            // 1. Result visually equals earring
+            // 2. Crafting grid has no items (no valid recipe)
+            boolean gridEmpty = true;
+            for (Slot s : menu.slots) {
+                // Crafting grid slots are 1–4
+                if (s.index >= 1 && s.index <= 4 && !s.getItem().isEmpty()) {
+                    gridEmpty = false;
+                    break;
+                }
+            }
+
+            if (gridEmpty && resultStack.is(earringStack.getItem())) {
+                resultSlot.set(ItemStack.EMPTY);
+                resultSlot.setChanged();
+                CatocraftMod.LOGGER.debug("[EarringMenuScreen] Cleared ghost result (grid empty, matched earring)");
+            }
+
+        } catch (Exception ex) {
+            // quietly ignore any slot misalignment
+        }
+    }
+
+    // ------------------------------------------------------------
+    //  🔹 Label + Tooltip Rendering
+    // ------------------------------------------------------------
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gfx, mouseX, mouseY, partialTick);

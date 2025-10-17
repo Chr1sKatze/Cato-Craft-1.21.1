@@ -156,10 +156,10 @@ public class EarringCapabilityHandler {
      * (Comment out if you want instances to survive across sessions in the same JVM.)
      */
     @SubscribeEvent
-    public static void onPlayerLoggedOut(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
-        // Keep it if you want between-login persistence in same runtime; remove to free memory:
-        // EARRING_INSTANCES.remove(player.getUUID());
+        EARRING_INSTANCES.remove(player.getUUID());
+        CatocraftMod.LOGGER.debug("[EarringCap] Cleared cached instance for {}", player.getName().getString());
     }
 
     /**
