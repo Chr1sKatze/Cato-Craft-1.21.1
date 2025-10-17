@@ -1,0 +1,8 @@
+{
+  "message_id": "arcane_spell",
+  "scaling": "never",
+  "exhaustion": 0.0,
+  "damage_type_tags": [
+    "minecraft:is_magic"
+  ]
+}

@@ -38,7 +38,11 @@
   "item.catocraftmod.preservation_crystal": "Preservation Crystal",
 
   "item.catocraftmod.earring_of_vitality": "Earring of Vitality",
-  "item.modifiers.catocraftmod.earring": "When equipped (Earring Slot):",
+  "item.modifiers.catocraftmod.earring": "When equipped:",
+
+  "death.attack.fire_spell": "%1$s was incinerated by %2$s's fire spell",
+  "death.attack.frost_spell": "%1$s was frozen solid by %2$s",
+  "death.attack.arcane_spell": "%1$s was obliterated by %2$s's arcane blast",
 
   "enchantment.level.1": "I",
   "enchantment.level.2": "II",

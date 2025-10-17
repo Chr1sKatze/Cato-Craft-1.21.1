@@ -10,6 +10,7 @@ import net.chriskatze.catocraftmod.menu.ModMenus;
 import net.chriskatze.catocraftmod.network.NetworkHandler;
 import net.chriskatze.catocraftmod.sound.ModSounds;
 import net.chriskatze.catocraftmod.tooltip.ClientTooltipHandler;
+import net.chriskatze.catocraftmod.util.ModAttributes;
 import net.chriskatze.catocraftmod.util.ModTags;
 import net.chriskatze.catocraftmod.villager.ModVillagers;
 import net.minecraft.core.HolderLookup;
@@ -46,12 +47,13 @@ public class CatocraftMod {
     }
 
     public CatocraftMod(IEventBus modEventBus, ModContainer modContainer) {
+
         // ------------------- Core lifecycle listeners -------------------
         modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(NetworkHandler::register); // Network packet registration
+        modEventBus.addListener(NetworkHandler::register);
         NeoForge.EVENT_BUS.register(this);
 
-        // ------------------- Content registration -------------------
+        // ------------------- Content registration -----------------------
         ModMenus.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);
@@ -59,13 +61,13 @@ public class CatocraftMod {
         ModVillagers.register(modEventBus);
         ModSounds.register(modEventBus);
 
-        // ------------------- Creative tab setup -------------------
+        ModAttributes.ATTRIBUTES.register(modEventBus);
+
+        // ------------------- Creative tab setup -------------------------
         modEventBus.addListener(this::addCreative);
 
-        // ------------------- Dependency check -------------------
-        checkDependencies();
 
-// ------------------- Client-only registrations -------------------
+        // ------------------- Client-only registrations ------------------
         if (FMLLoader.getDist().isClient()) {
             NeoForge.EVENT_BUS.register(ClientTooltipHandler.class);
             OreGlowRenderer.registerReloadListener();
@@ -104,61 +106,6 @@ public class CatocraftMod {
         if (event.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
             event.accept(ModBlocks.PLATINUM_ORE);
             event.accept(ModBlocks.PLATINUM_DEEPSLATE_ORE);
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Dependency Checking
-    // ---------------------------------------------------------------------
-    private void checkDependencies() {
-        requireMinVersion("spell_power", "1.4.0", true);
-        requireMinVersion("fabric_api", "0.115.6+2.1.1+1.21.1", true);
-
-        if (FMLLoader.getDist().isClient()) {
-            requireMinVersion("playeranimator", "2.0.1", true);
-        }
-    }
-
-    private void requireMinVersion(String modId, String minVersion, boolean mandatory) {
-        ModList mods = ModList.get();
-        mods.getModContainerById(modId).ifPresentOrElse(container -> {
-            String loadedVersion = container.getModInfo().getVersion().toString();
-            if (compareVersions(loadedVersion, minVersion) < 0) {
-                throw new RuntimeException(String.format(
-                        "❌ CatoCraft requires %s %s+, but found %s. Please update.",
-                        modId, minVersion, loadedVersion
-                ));
-            }
-        }, () -> {
-            if (mandatory) {
-                throw new RuntimeException(String.format(
-                        "❌ CatoCraft requires %s %s+, but it is missing!",
-                        modId, minVersion
-                ));
-            } else {
-                LOGGER.warn("⚠ Optional mod {} {}+ is missing, skipping.", modId, minVersion);
-            }
-        });
-    }
-
-    private int compareVersions(String current, String required) {
-        String[] currParts = current.replaceAll("[^0-9.]", "").split("\\.");
-        String[] reqParts = required.replaceAll("[^0-9.]", "").split("\\.");
-
-        int len = Math.max(currParts.length, reqParts.length);
-        for (int i = 0; i < len; i++) {
-            int c = i < currParts.length ? parseIntSafe(currParts[i]) : 0;
-            int r = i < reqParts.length ? parseIntSafe(reqParts[i]) : 0;
-            if (c != r) return c - r;
-        }
-        return 0;
-    }
-
-    private int parseIntSafe(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return 0;
         }
     }
 

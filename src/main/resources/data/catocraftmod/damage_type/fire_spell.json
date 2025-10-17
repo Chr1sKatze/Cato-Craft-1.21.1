@@ -1,0 +1,12 @@
+{
+  "exhaustion": 0.1,
+  "scaling": "never",
+  "message_id": "fire_spell",
+  "damage_effects": [
+    "minecraft:burning"
+  ],
+  "damage_type_tags": [
+    "minecraft:is_fire",
+    "minecraft:always_most_significant_fall"
+  ]
+}
