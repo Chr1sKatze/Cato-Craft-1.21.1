@@ -17,7 +17,7 @@ public class ModTags {
     // Jewelelry items
     public static final TagKey<Item> EARRINGS = TagKey.create(Registries.ITEM, CatocraftMod.id("earrings"));
 
-    // Item Tags
+    // Enchantment Items
     public static final TagKey<Item> REVELATION_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("revelation_items"));
     public static final TagKey<Item> REINFORCEMENT_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("reinforcement_items"));
     public static final TagKey<Item> GATHERING_ITEMS = TagKey.create(Registries.ITEM, CatocraftMod.id("gathering_items"));
@@ -28,12 +28,16 @@ public class ModTags {
     public static final TagKey<Item> PROSPERITY_AFFECTED = TagKey.create(Registries.ITEM, CatocraftMod.id("prosperity_affected"));
     public static final TagKey<Item> ATTRACTION_AFFECTED = TagKey.create(Registries.ITEM, CatocraftMod.id("attraction_affected"));
 
+    // Soul Stone Items
+    public static final TagKey<Item> SOUL_STONES = TagKey.create(Registries.ITEM, CatocraftMod.id("soul_stones"));
+
     // Block Tags
     public static final TagKey<Block> REVELATION_ORES = TagKey.create(Registries.BLOCK, CatocraftMod.id("revelation_ores"));
 
 
     // HolderSets
     public static HolderSet<Item> EARRINGS_HOLDER;
+    public static HolderSet<Item> SOUL_STONES_HOLDER;
 
     public static HolderSet<Item> REVELATION_ITEMS_HOLDER;
     public static HolderSet<Item> REINFORCEMENT_ITEMS_HOLDER;
@@ -46,6 +50,7 @@ public class ModTags {
     // ------------------- Bootstrap (HolderGetter) -------------------
     public static void initHolderSets(HolderGetter<Item> items) {
         EARRINGS_HOLDER = directFromTag(items, EARRINGS);
+        SOUL_STONES_HOLDER = directFromTag(items, SOUL_STONES);
 
         REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
@@ -59,6 +64,7 @@ public class ModTags {
     // ------------------- Runtime (RegistryLookup) -------------------
     public static void initHolderSets(HolderLookup.RegistryLookup<Item> items) {
         EARRINGS_HOLDER = directFromTag(items, EARRINGS);
+        SOUL_STONES_HOLDER = directFromTag(items, SOUL_STONES);
 
         REVELATION_ITEMS_HOLDER = directFromTag(items, REVELATION_ITEMS);
         REINFORCEMENT_ITEMS_HOLDER = directFromTag(items, REINFORCEMENT_ITEMS);
@@ -143,5 +149,14 @@ public class ModTags {
             return HolderSet.direct();
         }
         return ATTRACTION_AFFECTED_HOLDER;
+    }
+
+    public static class Items {
+        public static final TagKey<Item> SOUL_STONES =
+                TagKey.create(Registries.ITEM, CatocraftMod.id("soul_stones"));
+
+        // If you already had earrings before, make sure both exist:
+        public static final TagKey<Item> EARRINGS =
+                TagKey.create(Registries.ITEM, CatocraftMod.id("earrings"));
     }
 }

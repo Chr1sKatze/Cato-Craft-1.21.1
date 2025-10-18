@@ -66,6 +66,19 @@ public class ModItems {
                             .build()
             ));
 
+    // ---------------- SoulStone Items ----------------
+    public static final DeferredItem<Item> FIRE_MAGE_SOUL_STONE =
+            ITEMS.register("fire_mage_soul_stone",
+                    () -> new SoulStoneItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .rarity(net.minecraft.world.item.Rarity.UNCOMMON),
+                            ImmutableMultimap.<Holder<Attribute>, AttributeModifier>builder()
+                                    .put(ModAttributes.MOVEMENT_SPEED,
+                                            ModAttributes.multiply("soulstone_speed_bonus", 0.05)) // +5% movement speed
+                                    .build()
+                    ));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

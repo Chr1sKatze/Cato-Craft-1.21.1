@@ -28,22 +28,30 @@ public class ElementalResistanceHandler {
 
         Level level = target.level();
 
+        // Ensure the target actually HAS our attributes before using them
+        if (!target.getAttributes().hasAttribute(ModAttributes.FIRE_RESIST)
+                && !target.getAttributes().hasAttribute(ModAttributes.FROST_RESIST)
+                && !target.getAttributes().hasAttribute(ModAttributes.ARCANE_RESIST)) {
+            // If somehow not registered (e.g., mod conflict), skip safely
+            return;
+        }
+
         // 🔥 FIRE Damage (lava, fireball, or custom fire spell)
-        if (isFireDamage(source)) {
+        if (isFireDamage(source) && target.getAttributes().hasAttribute(ModAttributes.FIRE_RESIST)) {
             double resist = target.getAttributeValue(ModAttributes.FIRE_RESIST);
             applyResistance(event, resist, "fire");
             return;
         }
 
         // ❄️ FROST Damage (freeze, custom frost spell)
-        if (isFrostDamage(source)) {
+        if (isFrostDamage(source) && target.getAttributes().hasAttribute(ModAttributes.FROST_RESIST)) {
             double resist = target.getAttributeValue(ModAttributes.FROST_RESIST);
             applyResistance(event, resist, "frost");
             return;
         }
 
         // 🪄 ARCANE Damage (magic, indirect magic, or custom arcane spell)
-        if (isArcaneDamage(source)) {
+        if (isArcaneDamage(source) && target.getAttributes().hasAttribute(ModAttributes.ARCANE_RESIST)) {
             double resist = target.getAttributeValue(ModAttributes.ARCANE_RESIST);
             applyResistance(event, resist, "arcane");
         }

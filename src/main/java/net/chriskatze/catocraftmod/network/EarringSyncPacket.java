@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record EarringSyncPacket(CompoundTag tag) implements CustomPacketPayload {
+
     public static final Type<EarringSyncPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "earring_sync"));
 
@@ -23,7 +24,9 @@ public record EarringSyncPacket(CompoundTag tag) implements CustomPacketPayload 
             );
 
     @Override
-    public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
 
     public static void handle(EarringSyncPacket msg, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
@@ -44,9 +47,13 @@ public record EarringSyncPacket(CompoundTag tag) implements CustomPacketPayload 
                 );
 
                 if (mc.player.containerMenu instanceof net.chriskatze.catocraftmod.menu.EarringMenu menu) {
-                    menu.getSlot(net.chriskatze.catocraftmod.menu.EarringMenu.EARRING_SLOT_INDEX)
-                            .set(synced.copy());
-                    CatocraftMod.LOGGER.debug("[EarringSyncPacket] Refreshed EarringMenu slot with {}", synced);
+                    int earringSlot = net.chriskatze.catocraftmod.menu.EarringMenu.getEarringSlotIndex();
+                    if (earringSlot >= 0 && earringSlot < menu.slots.size()) {
+                        menu.getSlot(earringSlot).set(synced.copy());
+                        menu.getSlot(earringSlot).setChanged();
+                        menu.broadcastChanges();
+                        CatocraftMod.LOGGER.debug("[EarringSyncPacket] Updated Earring slot {}", synced);
+                    }
                 } else {
                     mc.player.inventoryMenu.broadcastChanges();
                 }

@@ -42,6 +42,13 @@ public class NetworkHandler {
                 OpenEarringMenuPacket::handle
         );
 
+        // 4️⃣ SoulStoneSyncPacket (server → client)
+        registrar.playToClient(
+                SoulStoneSyncPacket.TYPE,
+                SoulStoneSyncPacket.STREAM_CODEC,
+                SoulStoneSyncPacket::handle
+        );
+
         CatocraftMod.LOGGER.info(
                 "[NetworkHandler] Registered packets: revelation_glow, earring_sync, open_earring_menu, earring_slot_changed"
         );

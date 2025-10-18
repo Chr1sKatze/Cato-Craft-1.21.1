@@ -13,18 +13,20 @@ import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.function.Function;
+
 /**
- * Unified attribute hub for both vanilla and custom RPG attributes.
- * Also provides convenient creation helpers for AttributeModifiers.
+ * 🔹 Central registry for all CatoCraft custom attributes.
+ * Works with NeoForge 21.1.209 and Minecraft 1.21.1.
  *
- * Fully compatible with Minecraft 1.21.1 / NeoForge 21.1.209.
+ * - DeferredHolders (public static final) are safe during registration.
+ * - Cached Holders (runtime) are only valid after the server starts.
  */
 public class ModAttributes {
 
     // ============================================================
-    // 🔹 Utility functions
+    // 🔹 Utility Helpers
     // ============================================================
-
     public static ResourceLocation id(String key) {
         return ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, key);
     }
@@ -38,16 +40,12 @@ public class ModAttributes {
     }
 
     // ============================================================
-    // 🔹 Registration
+    // 🔹 Deferred Registration (safe for early phase)
     // ============================================================
-
     public static final DeferredRegister<Attribute> ATTRIBUTES =
             DeferredRegister.create(Registries.ATTRIBUTE, CatocraftMod.MOD_ID);
 
-    // ============================================================
-    // 🔹 Vanilla Attribute Holders
-    // ============================================================
-
+    // --- Vanilla shortcuts ---
     public static final Holder<Attribute> MAX_HEALTH = Attributes.MAX_HEALTH;
     public static final Holder<Attribute> MOVEMENT_SPEED = Attributes.MOVEMENT_SPEED;
     public static final Holder<Attribute> ATTACK_DAMAGE = Attributes.ATTACK_DAMAGE;
@@ -55,7 +53,7 @@ public class ModAttributes {
     public static final Holder<Attribute> ARMOR_TOUGHNESS = Attributes.ARMOR_TOUGHNESS;
 
     // ============================================================
-    // 🔹 Custom Combat Attributes
+    // 🔹 Custom Combat Attributes (DeferredHolders)
     // ============================================================
 
     // --- Offensive Power ---
@@ -102,7 +100,7 @@ public class ModAttributes {
                             .setSyncable(true));
 
     // ============================================================
-    // 🔹 Cached holders for quick access
+    // 🔹 Runtime Cached Holders (valid only after server starts)
     // ============================================================
     public static Holder<Attribute> FIRE_POWER_HOLDER;
     public static Holder<Attribute> FROST_POWER_HOLDER;
@@ -115,12 +113,15 @@ public class ModAttributes {
     public static Holder<Attribute> HEALING_POWER_HOLDER;
     public static Holder<Attribute> MANA_REGEN_HOLDER;
 
+    /**
+     * Called once on server start to populate runtime holders.
+     * Safe to call only when registries are fully loaded.
+     */
     public static void cacheHolders(MinecraftServer server) {
         HolderLookup.RegistryLookup<Attribute> lookup =
                 server.registryAccess().lookupOrThrow(Registries.ATTRIBUTE);
 
-        // Helper for clean error handling
-        java.util.function.Function<DeferredHolder<Attribute, Attribute>, Holder<Attribute>> safeGet = def -> {
+        Function<DeferredHolder<Attribute, Attribute>, Holder<Attribute>> safeGet = def -> {
             try {
                 return lookup.get(def.getKey()).orElseThrow(() ->
                         new IllegalStateException("Missing attribute: " + def.getId()));
@@ -141,9 +142,10 @@ public class ModAttributes {
         HEALING_POWER_HOLDER= safeGet.apply(HEALING_POWER);
         MANA_REGEN_HOLDER   = safeGet.apply(MANA_REGEN);
 
-        // ✅ Summary log
-        CatocraftMod.LOGGER.info("[ModAttributes] Cached attribute holders: fire={}, frost={}, arcane={}, healing={}, mana={}",
+        CatocraftMod.LOGGER.info(
+                "[ModAttributes] Cached runtime holders: fire={}, frost={}, arcane={}, healing={}, mana={}",
                 FIRE_POWER_HOLDER != null, FROST_POWER_HOLDER != null, ARCANE_POWER_HOLDER != null,
-                HEALING_POWER_HOLDER != null, MANA_REGEN_HOLDER != null);
+                HEALING_POWER_HOLDER != null, MANA_REGEN_HOLDER != null
+        );
     }
 }

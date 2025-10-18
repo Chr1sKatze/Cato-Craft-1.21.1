@@ -13,14 +13,13 @@ import net.chriskatze.catocraftmod.tooltip.ClientTooltipHandler;
 import net.chriskatze.catocraftmod.util.ModAttributes;
 import net.chriskatze.catocraftmod.util.ModTags;
 import net.chriskatze.catocraftmod.villager.ModVillagers;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -51,7 +50,15 @@ public class CatocraftMod {
         // ------------------- Core lifecycle listeners -------------------
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(NetworkHandler::register);
+
+        ModAttributes.ATTRIBUTES.register(modEventBus);
+
+        // ✅ Correct: register attribute modification event on MOD BUS
+        modEventBus.addListener(this::onEntityAttributeModify);
+
+        // ✅ Runtime events go on NeoForge EVENT BUS
         NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.addListener(this::registerCommands);
 
         // ------------------- Content registration -----------------------
         ModMenus.register(modEventBus);
@@ -61,16 +68,20 @@ public class CatocraftMod {
         ModVillagers.register(modEventBus);
         ModSounds.register(modEventBus);
 
-        ModAttributes.ATTRIBUTES.register(modEventBus);
-
         // ------------------- Creative tab setup -------------------------
         modEventBus.addListener(this::addCreative);
-
 
         // ------------------- Client-only registrations ------------------
         if (FMLLoader.getDist().isClient()) {
             NeoForge.EVENT_BUS.register(ClientTooltipHandler.class);
             OreGlowRenderer.registerReloadListener();
+
+            Minecraft.getInstance().execute(() -> {
+                if (Minecraft.getInstance().getSingleplayerServer() != null) {
+                    ModAttributes.cacheHolders(Minecraft.getInstance().getSingleplayerServer());
+                    LOGGER.info("[CatocraftMod] Cached ModAttributes on client startup.");
+                }
+            });
         }
     }
 
@@ -79,7 +90,6 @@ public class CatocraftMod {
     // ---------------------------------------------------------------------
     private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            // Load your custom JSON config
             AnvilConfig.loadConfig();
             LOGGER.info("[CatocraftMod] Loaded Anvil JSON configuration.");
         });
@@ -110,28 +120,115 @@ public class CatocraftMod {
     }
 
     // ---------------------------------------------------------------------
+    // ✅ Attribute Registration for All Living Entities
+    // ---------------------------------------------------------------------
+    private void onEntityAttributeModify(EntityAttributeModificationEvent event) {
+        event.getTypes().forEach(type -> {
+            if (type.getCategory() != null) {
+                event.add(type, ModAttributes.FIRE_RESIST);
+                event.add(type, ModAttributes.FIRE_POWER);
+                event.add(type, ModAttributes.FROST_RESIST);
+                event.add(type, ModAttributes.FROST_POWER);
+                event.add(type, ModAttributes.ARCANE_RESIST);
+                event.add(type, ModAttributes.ARCANE_POWER);
+                event.add(type, ModAttributes.HEALING_POWER);
+                event.add(type, ModAttributes.MANA_REGEN);
+            }
+        });
+        LOGGER.info("[CatocraftMod] Registered elemental attributes for all living entities.");
+    }
+
+    private void registerCommands(RegisterCommandsEvent event) {
+    }
+
+    // ---------------------------------------------------------------------
     // Server Events
     // ---------------------------------------------------------------------
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        // Reload config safely at server start
-        AnvilConfig.loadConfig();
+        var server = event.getServer();
 
-        // ------------------- Item Holders -------------------
-        HolderLookup.RegistryLookup<Item> items = event.getServer().registryAccess().lookupOrThrow(Registries.ITEM);
-        ModTags.initHolderSets(items);
-        LOGGER.info("[CatocraftMod] ModTags HolderSets initialized.");
+        // ============================================================
+        // 🔹 1. Initialize Attributes
+        // ============================================================
+        try {
+            ModAttributes.cacheHolders(server);
+            LOGGER.info("[CatocraftMod] Cached ModAttributes holders on server start.");
+        } catch (Exception e) {
+            LOGGER.error("[CatocraftMod] ⚠ Failed to cache ModAttributes: {}", e.toString());
+        }
 
-        // ------------------- Enchantments -------------------
-        HolderLookup.RegistryLookup<Enchantment> enchants =
-                event.getServer().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        // ============================================================
+        // 🔹 2. Initialize Item and Tag Holders
+        // ============================================================
+        try {
+            var items = server.registryAccess().lookupOrThrow(Registries.ITEM);
+            ModTags.initHolderSets(items);
+            LOGGER.info("[CatocraftMod] Initialized ModTags HolderSets.");
+        } catch (Exception e) {
+            LOGGER.warn("[CatocraftMod] ⚠ Failed to initialize ModTags HolderSets: {}", e.toString());
+        }
 
-        ModEnchantments.PROSPERITY.setHolder(enchants.get(ModEnchantments.PROSPERITY.getKey()).orElseThrow());
-        ModEnchantments.ATTRACTION.setHolder(enchants.get(ModEnchantments.ATTRACTION.getKey()).orElseThrow());
-        ModEnchantments.GATHERING.setHolder(enchants.get(ModEnchantments.GATHERING.getKey()).orElseThrow());
-        ModEnchantments.REINFORCEMENT.setHolder(enchants.get(ModEnchantments.REINFORCEMENT.getKey()).orElseThrow());
-        ModEnchantments.REVELATION.setHolder(enchants.get(ModEnchantments.REVELATION.getKey()).orElseThrow());
+        // ============================================================
+        // 🔹 3. Initialize Enchantment Holders
+        // ============================================================
+        try {
+            var enchants = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 
-        LOGGER.info("[CatocraftMod] ModEnchantments Holders initialized.");
+            ModEnchantments.PROSPERITY.setHolder(
+                    enchants.get(ModEnchantments.PROSPERITY.getKey())
+                            .orElseGet(() -> {
+                                LOGGER.warn("[CatocraftMod] ⚠ Missing enchantment: prosperity");
+                                return null;
+                            })
+            );
+
+            ModEnchantments.ATTRACTION.setHolder(
+                    enchants.get(ModEnchantments.ATTRACTION.getKey())
+                            .orElseGet(() -> {
+                                LOGGER.warn("[CatocraftMod] ⚠ Missing enchantment: attraction");
+                                return null;
+                            })
+            );
+
+            ModEnchantments.GATHERING.setHolder(
+                    enchants.get(ModEnchantments.GATHERING.getKey())
+                            .orElseGet(() -> {
+                                LOGGER.warn("[CatocraftMod] ⚠ Missing enchantment: gathering");
+                                return null;
+                            })
+            );
+
+            ModEnchantments.REINFORCEMENT.setHolder(
+                    enchants.get(ModEnchantments.REINFORCEMENT.getKey())
+                            .orElseGet(() -> {
+                                LOGGER.warn("[CatocraftMod] ⚠ Missing enchantment: reinforcement");
+                                return null;
+                            })
+            );
+
+            ModEnchantments.REVELATION.setHolder(
+                    enchants.get(ModEnchantments.REVELATION.getKey())
+                            .orElseGet(() -> {
+                                LOGGER.warn("[CatocraftMod] ⚠ Missing enchantment: revelation");
+                                return null;
+                            })
+            );
+
+            LOGGER.info("[CatocraftMod] Initialized ModEnchantments Holders.");
+
+        } catch (Exception e) {
+            LOGGER.error("[CatocraftMod] ⚠ Failed to initialize enchantment holders: {}", e.toString());
+        }
+
+        // ============================================================
+        // 🔹 4. Load Configuration
+        // ============================================================
+        try {
+            AnvilConfig.loadConfig();
+            LOGGER.info("[CatocraftMod] Reloaded Anvil configuration on server start.");
+        } catch (Exception e) {
+            LOGGER.warn("[CatocraftMod] ⚠ Failed to reload Anvil configuration: {}", e.toString());
+        }
     }
 }

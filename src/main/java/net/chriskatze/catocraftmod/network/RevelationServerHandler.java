@@ -21,7 +21,7 @@ import java.util.*;
  * the glowing overlay. It also handles cooldowns, radius scaling per enchantment level,
  * and optimized broadcasting to nearby players.
  */
-@EventBusSubscriber(modid = CatocraftMod.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = CatocraftMod.MOD_ID)
 public class RevelationServerHandler {
 
     // ---------------------------------------------------------------------
