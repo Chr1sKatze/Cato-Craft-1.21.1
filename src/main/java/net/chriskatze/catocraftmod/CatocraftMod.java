@@ -1,7 +1,6 @@
 package net.chriskatze.catocraftmod;
 
 import net.chriskatze.catocraftmod.block.ModBlocks;
-import net.chriskatze.catocraftmod.client.render.OreGlowRenderer;
 import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
@@ -74,8 +73,6 @@ public class CatocraftMod {
         // ------------------- Client-only registrations ------------------
         if (FMLLoader.getDist().isClient()) {
             NeoForge.EVENT_BUS.register(ClientTooltipHandler.class);
-            OreGlowRenderer.registerReloadListener();
-
             Minecraft.getInstance().execute(() -> {
                 if (Minecraft.getInstance().getSingleplayerServer() != null) {
                     ModAttributes.cacheHolders(Minecraft.getInstance().getSingleplayerServer());
