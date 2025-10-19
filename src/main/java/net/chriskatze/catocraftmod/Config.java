@@ -2,6 +2,7 @@ package net.chriskatze.catocraftmod;
 
 import java.util.List;
 
+import io.wispforest.owo.config.annotation.RangeConstraint;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -32,5 +33,23 @@ public class Config {
 
     private static boolean validateItemName(final Object obj) {
         return obj instanceof String itemName && BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(itemName));
+    }
+
+    public static final boolean darkOverworld = true;
+    public static final boolean darkNether = true;
+    public static final boolean darkEnd = true;
+    public static final boolean darkDefault = true;
+    public static final boolean darkSkyless = true;
+    @RangeConstraint(min = 0, max = 1)
+    public static final double darkNetherFog = 0.5;
+    @RangeConstraint(min = 0, max = 1)
+    public static final double darkEndFog = 0.0;
+    public static final boolean blockLightOnly = false;
+    public static final boolean ignoreMoonPhase = false;
+    public static final MoonPhaseStyle moonPhaseStyle = MoonPhaseStyle.DEFAULT;
+    public static final boolean requireMod = false;
+
+    public enum MoonPhaseStyle {
+        DEFAULT, GRADUAL, BTW;
     }
 }

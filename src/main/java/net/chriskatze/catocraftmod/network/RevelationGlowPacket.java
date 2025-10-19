@@ -1,7 +1,7 @@
 package net.chriskatze.catocraftmod.network;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
-import net.chriskatze.catocraftmod.client.render.OreGlowRenderer;
+import net.chriskatze.catocraftmod.render.OreGlowRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
