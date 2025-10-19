@@ -1,7 +1,9 @@
 package net.chriskatze.catocraftmod.util;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -17,10 +20,7 @@ import java.util.function.Function;
 
 /**
  * 🔹 Central registry for all CatoCraft custom attributes.
- * Works with NeoForge 21.1.209 and Minecraft 1.21.1.
- *
- * - DeferredHolders (public static final) are safe during registration.
- * - Cached Holders (runtime) are only valid after the server starts.
+ * Now supports lazy self-initialization for client-side access (menus, tooltips, etc.).
  */
 public class ModAttributes {
 
@@ -40,7 +40,7 @@ public class ModAttributes {
     }
 
     // ============================================================
-    // 🔹 Deferred Registration (safe for early phase)
+    // 🔹 Deferred Registration
     // ============================================================
     public static final DeferredRegister<Attribute> ATTRIBUTES =
             DeferredRegister.create(Registries.ATTRIBUTE, CatocraftMod.MOD_ID);
@@ -53,10 +53,8 @@ public class ModAttributes {
     public static final Holder<Attribute> ARMOR_TOUGHNESS = Attributes.ARMOR_TOUGHNESS;
 
     // ============================================================
-    // 🔹 Custom Combat Attributes (DeferredHolders)
+    // 🔹 Custom Attributes
     // ============================================================
-
-    // --- Offensive Power ---
     public static final DeferredHolder<Attribute, Attribute> FIRE_POWER =
             ATTRIBUTES.register("fire_power", () ->
                     new RangedAttribute("attribute.name.catocraftmod.fire_power", 0.0, -10.0, 100.0)
@@ -72,7 +70,6 @@ public class ModAttributes {
                     new RangedAttribute("attribute.name.catocraftmod.arcane_power", 0.0, -10.0, 100.0)
                             .setSyncable(true));
 
-    // --- Resistances ---
     public static final DeferredHolder<Attribute, Attribute> FIRE_RESIST =
             ATTRIBUTES.register("fire_resist", () ->
                     new RangedAttribute("attribute.name.catocraftmod.fire_resist", 0.0, -1.0, 1.0)
@@ -88,7 +85,6 @@ public class ModAttributes {
                     new RangedAttribute("attribute.name.catocraftmod.arcane_resist", 0.0, -1.0, 1.0)
                             .setSyncable(true));
 
-    // --- Utility ---
     public static final DeferredHolder<Attribute, Attribute> HEALING_POWER =
             ATTRIBUTES.register("healing_power", () ->
                     new RangedAttribute("attribute.name.catocraftmod.healing_power", 0.0, -10.0, 100.0)
@@ -100,7 +96,7 @@ public class ModAttributes {
                             .setSyncable(true));
 
     // ============================================================
-    // 🔹 Runtime Cached Holders (valid only after server starts)
+    // 🔹 Runtime Cached Holders
     // ============================================================
     public static Holder<Attribute> FIRE_POWER_HOLDER;
     public static Holder<Attribute> FROST_POWER_HOLDER;
@@ -113,14 +109,16 @@ public class ModAttributes {
     public static Holder<Attribute> HEALING_POWER_HOLDER;
     public static Holder<Attribute> MANA_REGEN_HOLDER;
 
-    /**
-     * Called once on server start to populate runtime holders.
-     * Safe to call only when registries are fully loaded.
-     */
+    // ============================================================
+    // 🔹 Holder Initialization
+    // ============================================================
     public static void cacheHolders(MinecraftServer server) {
         HolderLookup.RegistryLookup<Attribute> lookup =
                 server.registryAccess().lookupOrThrow(Registries.ATTRIBUTE);
+        initHolders(lookup);
+    }
 
+    public static void initHolders(HolderGetter<Attribute> lookup) {
         Function<DeferredHolder<Attribute, Attribute>, Holder<Attribute>> safeGet = def -> {
             try {
                 return lookup.get(def.getKey()).orElseThrow(() ->
@@ -143,9 +141,50 @@ public class ModAttributes {
         MANA_REGEN_HOLDER   = safeGet.apply(MANA_REGEN);
 
         CatocraftMod.LOGGER.info(
-                "[ModAttributes] Cached runtime holders: fire={}, frost={}, arcane={}, healing={}, mana={}",
+                "[ModAttributes] Initialized runtime holders: fire={}, frost={}, arcane={}, healing={}, mana={}",
                 FIRE_POWER_HOLDER != null, FROST_POWER_HOLDER != null, ARCANE_POWER_HOLDER != null,
                 HEALING_POWER_HOLDER != null, MANA_REGEN_HOLDER != null
         );
     }
+
+    // ============================================================
+    // 🔹 Lazy client initialization
+    // ============================================================
+    private static boolean tryLazyInit() {
+        // Don’t even try on dedicated servers
+        if (!FMLLoader.getDist().isClient()) return false;
+
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level != null) {
+                var lookup = mc.level.registryAccess().lookupOrThrow(Registries.ATTRIBUTE);
+                initHolders(lookup);
+                CatocraftMod.LOGGER.info("[Catocraft] Lazy-initialized ModAttributes via client registry access.");
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    // ============================================================
+    // 🔹 Safe Getters
+    // ============================================================
+    private static Holder<Attribute> safeGet(Holder<Attribute> holder, String name) {
+        if (holder == null) {
+            CatocraftMod.LOGGER.warn("[Catocraft] {} accessed before initialization!", name);
+            tryLazyInit();
+        }
+        return holder;
+    }
+
+    public static Holder<Attribute> getFirePower()   { return safeGet(FIRE_POWER_HOLDER, "FIRE_POWER_HOLDER"); }
+    public static Holder<Attribute> getFrostPower()  { return safeGet(FROST_POWER_HOLDER, "FROST_POWER_HOLDER"); }
+    public static Holder<Attribute> getArcanePower() { return safeGet(ARCANE_POWER_HOLDER, "ARCANE_POWER_HOLDER"); }
+
+    public static Holder<Attribute> getFireResist()  { return safeGet(FIRE_RESIST_HOLDER, "FIRE_RESIST_HOLDER"); }
+    public static Holder<Attribute> getFrostResist() { return safeGet(FROST_RESIST_HOLDER, "FROST_RESIST_HOLDER"); }
+    public static Holder<Attribute> getArcaneResist(){ return safeGet(ARCANE_RESIST_HOLDER, "ARCANE_RESIST_HOLDER"); }
+
+    public static Holder<Attribute> getHealingPower(){ return safeGet(HEALING_POWER_HOLDER, "HEALING_POWER_HOLDER"); }
+    public static Holder<Attribute> getManaRegen()   { return safeGet(MANA_REGEN_HOLDER, "MANA_REGEN_HOLDER"); }
 }

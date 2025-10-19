@@ -1,0 +1,30 @@
+{
+  "width": 256,
+  "height": 180,
+  "background": "catocraftmod:textures/gui/equipment_bg.png",
+  "elements": [
+    {
+      "type": "label",
+      "text": "Test Equipment UI",
+      "x": 100,
+      "y": 6,
+      "color": "#FFFFFF",
+      "shadow": true
+    },
+    {
+      "type": "slot_group",
+      "id": "earrings",
+      "x": 110,
+      "y": 20,
+      "slots": 2,
+      "direction": "HORIZONTAL",
+      "valid_items": ["#catocraftmod:earrings"]
+    },
+    {
+      "type": "character_view",
+      "x": 50,
+      "y": 40,
+      "scale": 30
+    }
+  ]
+}

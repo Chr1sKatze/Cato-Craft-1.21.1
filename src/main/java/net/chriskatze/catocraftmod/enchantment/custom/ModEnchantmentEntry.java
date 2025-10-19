@@ -8,14 +8,10 @@ import net.minecraft.world.item.enchantment.Enchantment;
  * A helper class representing a custom enchantment for the mod.
  *
  * Stores the enchantment's ResourceKey, maximum level, and a cached Holder
- * for registry access. This is used in combination with ModEnchantments
- * to bootstrap and manage custom enchantments safely.
+ * for registry access. This is used with ModEnchantments to bootstrap and
+ * manage custom enchantments safely.
  */
 public class ModEnchantmentEntry {
-
-    // ---------------------------------------------------------------------
-    // Fields
-    // ---------------------------------------------------------------------
 
     /** The registry key for this enchantment */
     private final ResourceKey<Enchantment> key;
@@ -23,49 +19,39 @@ public class ModEnchantmentEntry {
     /** The maximum allowed level for this enchantment */
     private final int maxLevel;
 
-    /** Cached Holder for this enchantment from the registry */
+    /** Cached Holder for this enchantment from the registry (may be null until initialized) */
     private Holder<Enchantment> holder;
 
-    // ---------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------
-
-    /**
-     * Creates a new ModEnchantmentEntry.
-     *
-     * @param key      The ResourceKey of the enchantment.
-     * @param maxLevel The maximum level of the enchantment.
-     */
     public ModEnchantmentEntry(ResourceKey<Enchantment> key, int maxLevel) {
         this.key = key;
         this.maxLevel = maxLevel;
     }
 
-    // ---------------------------------------------------------------------
-    // Getters
-    // ---------------------------------------------------------------------
+    // ── Getters ────────────────────────────────────────────────────────────
+    public ResourceKey<Enchantment> getKey() { return key; }
+    public int getMaxLevel() { return maxLevel; }
+    public Holder<Enchantment> getHolder() { return holder; }
 
-    /** Returns the ResourceKey of this enchantment */
-    public ResourceKey<Enchantment> getKey() {
-        return key;
-    }
+    /** @return true once the registry holder has been initialized */
+    public boolean hasHolder() { return holder != null; }
 
-    /** Returns the maximum level allowed for this enchantment */
-    public int getMaxLevel() {
-        return maxLevel;
-    }
+    /**
+     * @return the holder or null if not initialized
+     * (useful for optional UI contexts without throwing)
+     */
+    public Holder<Enchantment> getHolderOrNull() { return holder; }
 
-    /** Returns the cached Holder for this enchantment */
-    public Holder<Enchantment> getHolder() {
+    /**
+     * @return the holder or throws if not initialized
+     * (useful for server-only logic that expects full init)
+     */
+    public Holder<Enchantment> getHolderOrThrow() {
+        if (holder == null) {
+            throw new IllegalStateException("Enchantment holder not initialized for " + key.location());
+        }
         return holder;
     }
 
-    // ---------------------------------------------------------------------
-    // Setters
-    // ---------------------------------------------------------------------
-
-    /** Caches the Holder for this enchantment after registration */
-    public void setHolder(Holder<Enchantment> holder) {
-        this.holder = holder;
-    }
+    // ── Setters ────────────────────────────────────────────────────────────
+    public void setHolder(Holder<Enchantment> holder) { this.holder = holder; }
 }

@@ -3,7 +3,9 @@ package net.chriskatze.catocraftmod.enchantment;
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.enchantment.custom.ModEnchantmentEntry;
 import net.chriskatze.catocraftmod.util.ModTags;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -11,64 +13,45 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.neoforged.fml.loading.FMLLoader;
 
 /**
- * Registers all custom enchantments for the Catocraft mod.
- *
- * Each enchantment is associated with a maximum level and
- * a set of items it can be applied to.
+ * Registers and manages all custom enchantments for the Catocraft mod.
+ * Includes safe client-side lazy initialization for menus and tooltips.
  */
 public class ModEnchantments {
 
     // ---------------------------------------------------------------------
     // Enchantment definitions
     // ---------------------------------------------------------------------
-
-    /** Reinforcement enchantment increases tool durability */
     public static final ModEnchantmentEntry REINFORCEMENT = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("reinforcement")), 12);
 
-    /** Gathering Speed enchantment increases mining or gathering speed */
     public static final ModEnchantmentEntry GATHERING = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("gathering")), 12);
 
-    /** Prosperity enchantment affects loot quality or quantity */
     public static final ModEnchantmentEntry PROSPERITY = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("prosperity")), 12);
 
-    /** Attraction enchantment attracts nearby items or entities */
     public static final ModEnchantmentEntry ATTRACTION = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("attraction")), 12);
 
-    /** Revelation enchantment highlights ores around the player */
     public static final ModEnchantmentEntry REVELATION = new ModEnchantmentEntry(
             ResourceKey.create(Registries.ENCHANTMENT, CatocraftMod.id("revelation")), 12);
 
     // ---------------------------------------------------------------------
-    // Bootstrap method
+    // Bootstrap method (for Datapack registration)
     // ---------------------------------------------------------------------
-
-    /**
-     * Initializes and registers all enchantments.
-     *
-     * @param context The bootstrap context used to register enchantments.
-     */
     public static void bootstrap(BootstrapContext<Enchantment> context) {
-
-        // Lookup all items from the registry
         HolderGetter<Item> items = context.lookup(Registries.ITEM);
+        ModTags.initHolderSets(items); // ensure tag-based HolderSets are ready
 
-        // Initialize all HolderSets from tags (tools, swords, etc.)
-        ModTags.initHolderSets(items);
-
-        // Retrieve HolderSets for each enchantment
         HolderSet<Item> revelationItems = ModTags.REVELATION_ITEMS_HOLDER;
         HolderSet<Item> reinforcementItems = ModTags.REINFORCEMENT_ITEMS_HOLDER;
         HolderSet<Item> gatheringItems = ModTags.GATHERING_ITEMS_HOLDER;
         HolderSet<Item> prosperityItems = ModTags.PROSPERITY_ITEMS_HOLDER;
         HolderSet<Item> attractionItems = ModTags.ATTRACTION_ITEMS_HOLDER;
 
-        // Register each enchantment with its allowed items
         registerEnchant(context, REVELATION, revelationItems);
         registerEnchant(context, GATHERING, gatheringItems);
         registerEnchant(context, REINFORCEMENT, reinforcementItems);
@@ -76,38 +59,82 @@ public class ModEnchantments {
         registerEnchant(context, ATTRACTION, attractionItems);
     }
 
-    // ---------------------------------------------------------------------
-    // Helper method to register a single enchantment
-    // ---------------------------------------------------------------------
-
-    /**
-     * Registers a single enchantment in the context.
-     *
-     * @param context      The bootstrap context.
-     * @param entry        The custom enchantment entry.
-     * @param allowedItems The set of items this enchantment can be applied to.
-     */
     private static void registerEnchant(BootstrapContext<Enchantment> context,
                                         ModEnchantmentEntry entry,
                                         HolderSet<Item> allowedItems) {
-
-        // Build the enchantment definition
         Enchantment.Builder builder = Enchantment.enchantment(
                 Enchantment.definition(
-                        allowedItems,       // items that can receive the enchantment
-                        allowedItems,       // items affected by the enchantment
-                        entry.getMaxLevel(),// max level
-                        1,                  // rarity weight
-                        Enchantment.dynamicCost(9999, 0), // min cost function
-                        Enchantment.dynamicCost(9999, 0), // max cost function
-                        1,                  // minimum level cost multiplier
-                        EquipmentSlotGroup.MAINHAND      // applicable equipment slots
+                        allowedItems,
+                        allowedItems,
+                        entry.getMaxLevel(),
+                        1,
+                        Enchantment.dynamicCost(9999, 0),
+                        Enchantment.dynamicCost(9999, 0),
+                        1,
+                        EquipmentSlotGroup.MAINHAND
                 ));
 
-        // Register enchantment in the registry
         context.register(entry.getKey(), builder.build(entry.getKey().location()));
 
-        // Cache the Holder for later use in drop handlers or mixins
         entry.setHolder(context.lookup(Registries.ENCHANTMENT).getOrThrow(entry.getKey()));
     }
+
+    // ---------------------------------------------------------------------
+    // Runtime Holder Initialization (for server startup)
+    // ---------------------------------------------------------------------
+    public static void initHolders(HolderGetter<Enchantment> enchants) {
+        initHolder(enchants, REINFORCEMENT, "reinforcement");
+        initHolder(enchants, GATHERING, "gathering");
+        initHolder(enchants, PROSPERITY, "prosperity");
+        initHolder(enchants, ATTRACTION, "attraction");
+        initHolder(enchants, REVELATION, "revelation");
+    }
+
+    private static void initHolder(HolderGetter<Enchantment> enchants,
+                                   ModEnchantmentEntry entry,
+                                   String logName) {
+        entry.setHolder(
+                enchants.get(entry.getKey()).orElseGet(() -> {
+                    CatocraftMod.LOGGER.warn("[ModEnchantments] ⚠ Missing enchantment: {}", logName);
+                    return null;
+                })
+        );
+    }
+
+    // ---------------------------------------------------------------------
+    // Client-safe Lazy Initialization
+    // ---------------------------------------------------------------------
+    private static boolean tryLazyInit() {
+        // Only attempt this on the physical client
+        if (!FMLLoader.getDist().isClient()) return false;
+
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level != null) {
+                HolderLookup.RegistryLookup<Enchantment> lookup =
+                        mc.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+                initHolders(lookup);
+                CatocraftMod.LOGGER.info("[Catocraft] Lazy-initialized ModEnchantments via client registry access.");
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    // ---------------------------------------------------------------------
+    // Safe Accessors
+    // ---------------------------------------------------------------------
+    private static ModEnchantmentEntry safeGet(ModEnchantmentEntry entry, String name) {
+        if (!entry.hasHolder()) {
+            CatocraftMod.LOGGER.warn("[Catocraft] {} accessed before initialization!", name);
+            tryLazyInit();
+        }
+        return entry;
+    }
+
+    public static ModEnchantmentEntry getReinforcement() { return safeGet(REINFORCEMENT, "REINFORCEMENT"); }
+    public static ModEnchantmentEntry getGathering()     { return safeGet(GATHERING, "GATHERING"); }
+    public static ModEnchantmentEntry getProsperity()    { return safeGet(PROSPERITY, "PROSPERITY"); }
+    public static ModEnchantmentEntry getAttraction()    { return safeGet(ATTRACTION, "ATTRACTION"); }
+    public static ModEnchantmentEntry getRevelation()    { return safeGet(REVELATION, "REVELATION"); }
 }

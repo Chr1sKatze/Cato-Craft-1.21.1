@@ -9,7 +9,11 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * Central registration for all Catocraft network packets.
+ * 📡 Central registration for all Catocraft network packets.
+ *
+ * Handles both:
+ *  - server → client syncs (e.g. EquipmentSyncPacket)
+ *  - client → server updates (e.g. EquipmentSlotUpdatePacket)
  */
 public class NetworkHandler {
 
@@ -21,36 +25,44 @@ public class NetworkHandler {
                 .versioned("1")
                 .optional();
 
-        // 1️⃣ RevelationGlowPacket (server → client)
+        // ────────────────────────────────────────────────
+        // Server → Client
+        // ────────────────────────────────────────────────
+
+        // 1️⃣ RevelationGlowPacket
         registrar.playToClient(
                 RevelationGlowPacket.TYPE,
                 RevelationGlowPacket.STREAM_CODEC,
                 RevelationGlowPacket::handle
         );
 
-        // 2️⃣ EarringSyncPacket (server → client)
+        // 2️⃣ Unified EquipmentSyncPacket
         registrar.playToClient(
-                EarringSyncPacket.TYPE,
-                EarringSyncPacket.STREAM_CODEC,
-                EarringSyncPacket::handle
+                EquipmentSyncPacket.TYPE,
+                EquipmentSyncPacket.STREAM_CODEC,
+                EquipmentSyncPacket::handle
         );
 
-        // 3️⃣ OpenEarringMenuPacket (client → server)
+        // ────────────────────────────────────────────────
+        // Client → Server
+        // ────────────────────────────────────────────────
+
+        // 3️⃣ OpenEquipmentMenuPacket
         registrar.playToServer(
-                OpenEarringMenuPacket.TYPE,
-                OpenEarringMenuPacket.STREAM_CODEC,
-                OpenEarringMenuPacket::handle
+                OpenEquipmentMenuPacket.TYPE,
+                OpenEquipmentMenuPacket.STREAM_CODEC,
+                OpenEquipmentMenuPacket::handle
         );
 
-        // 4️⃣ SoulStoneSyncPacket (server → client)
-        registrar.playToClient(
-                SoulStoneSyncPacket.TYPE,
-                SoulStoneSyncPacket.STREAM_CODEC,
-                SoulStoneSyncPacket::handle
+        // 4️⃣ EquipmentSlotUpdatePacket (slot drag/drop updates)
+        registrar.playToServer(
+                EquipmentSlotUpdatePacket.TYPE,
+                EquipmentSlotUpdatePacket.STREAM_CODEC,
+                EquipmentSlotUpdatePacket::handle
         );
 
         CatocraftMod.LOGGER.info(
-                "[NetworkHandler] Registered packets: revelation_glow, earring_sync, open_earring_menu, earring_slot_changed"
+                "[NetworkHandler] Registered packets: revelation_glow, equipment_sync, open_equipment_menu, equipment_slot_update"
         );
     }
 

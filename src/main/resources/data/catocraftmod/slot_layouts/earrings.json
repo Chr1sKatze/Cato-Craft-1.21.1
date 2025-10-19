@@ -1,0 +1,9 @@
+{
+  "group": "catocraftmod:earrings",
+  "title": "Earrings",
+  "valid_items": ["#catocraftmod:earrings"],
+  "x": 100,
+  "y": 16,
+  "rows": 1,
+  "columns": 2
+}

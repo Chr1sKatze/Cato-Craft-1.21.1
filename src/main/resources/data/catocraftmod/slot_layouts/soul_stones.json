@@ -1,0 +1,9 @@
+{
+  "group": "catocraftmod:soul_stones",
+  "title": "Soul Stones",
+  "valid_items": ["#catocraftmod:soul_stones"],
+  "x": 120,
+  "y": 32,
+  "rows": 1,
+  "columns": 1
+}
