@@ -61,6 +61,12 @@ public class NetworkHandler {
                 EquipmentSlotUpdatePacket::handle
         );
 
+        registrar.playToServer(
+                KeyPressPacket.TYPE,
+                KeyPressPacket.STREAM_CODEC,
+                KeyPressPacket::handle
+        );
+
         CatocraftMod.LOGGER.info(
                 "[NetworkHandler] Registered packets: revelation_glow, equipment_sync, open_equipment_menu, equipment_slot_update"
         );

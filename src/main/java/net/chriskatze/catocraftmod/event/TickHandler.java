@@ -1,10 +1,9 @@
 package net.chriskatze.catocraftmod.event;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
+import net.chriskatze.catocraftmod.network.KeyPressPacket;
 import net.chriskatze.catocraftmod.render.ModRenderer;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -29,7 +28,7 @@ public class TickHandler {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         while (UPDATE_RENDERER_KEY.consumeClick()) {
-            ModRenderer.updateRender();
+            KeyPressPacket.sendToServer(UPDATE_RENDERER_KEY);
         }
     }
 
