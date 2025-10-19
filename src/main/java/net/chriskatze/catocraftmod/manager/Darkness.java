@@ -178,19 +178,4 @@ public class Darkness {
             }
         }
     }
-
-    // check all 6 sides
-    // brightness is only for certain blocks
-    // see https://valvedev.info/guides/understanding-light-level-mechanics-in-minecraft/
-    // https://greyminecraftcoder.blogspot.com/2014/12/lighting-18.html
-    public static int getLightLevel(ClientLevel level, BlockPos pos, LightLayer layer) {
-        int lightLevel = level.getBrightness(layer, pos);
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.below()));
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.above()));
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.east()));
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.west()));
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.north()));
-        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.south()));
-        return lightLevel;
-    }
 }

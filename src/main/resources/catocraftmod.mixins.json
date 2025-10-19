@@ -12,7 +12,13 @@
     "ServerLevelMixin",
     "ItemStackReinforcementMixin",
     "LightTextureMixin",
-    "LightMapRendererMixin"
+    "LightMapRendererMixin",
+    "LightEngineMixin",
+    "LayerLightSectionStorageMixin",
+    "BlockLightEngineMixin",
+    "BlockLightSectionStorageMixin",
+    "EntityRendererMixin",
+    "LevelRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

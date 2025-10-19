@@ -4,7 +4,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.kosmx.playerAnim.core.util.Vec3f;
 import net.chriskatze.catocraftmod.CatocraftMod;
+import net.chriskatze.catocraftmod.event.ItemChangeHandler;
+import net.chriskatze.catocraftmod.interfaces.IBlockLightEngine;
+import net.chriskatze.catocraftmod.interfaces.ILevelRendererMixin;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -17,8 +21,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -30,6 +37,8 @@ import org.joml.Matrix4f;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static net.minecraft.world.item.Items.TORCH;
 
 @EventBusSubscriber(modid = CatocraftMod.MOD_ID, value = Dist.CLIENT)
 public class ModRenderer {
@@ -128,6 +137,91 @@ public class ModRenderer {
         BlockPos neighborPos = pos.relative(dir);
         BlockState neighborState = mc.level.getBlockState(neighborPos);
         return neighborState.isSolidRender(mc.level, neighborPos);
+    }
+
+    static BlockPos oldPos = new BlockPos(0, 0, 0);
+
+    // check all 6 sides
+    // brightness is only for certain blocks
+    // see https://valvedev.info/guides/understanding-light-level-mechanics-in-minecraft/
+    // https://greyminecraftcoder.blogspot.com/2014/12/lighting-18.html
+    public static int getLightLevel(ClientLevel level, LightLayer layer, BlockPos pos) {
+        int lightLevel = level.getBrightness(layer, pos);
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.below()));
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.above()));
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.east()));
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.west()));
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.north()));
+        lightLevel = Math.max(lightLevel, level.getBrightness(layer, pos.south()));
+        return lightLevel;
+    }
+
+    public static int RADIUS = 4;
+
+    public static int getLightLevel(BlockPos pos, int prevLevel) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.level != null && mc.player.getHandSlots().iterator().next().is(TORCH)) {
+            final int surroundBrightness = getLightLevel(mc.level, LightLayer.BLOCK, pos);
+            double distSq = mc.player.position().distanceToSqr(Vec3.atCenterOf(pos));
+            float brightness = Mth.clamp(1.0f - (float) distSq / (RADIUS * RADIUS), 0.0f, 1.0f);
+            if (brightness >= 0.001f) {
+                return Math.max(prevLevel, Math.max(surroundBrightness, Math.round(brightness * 15)));
+            }
+        }
+        return -1;
+    }
+
+    public static HashMap<Long, Integer> savedLightLevels = new HashMap<>();
+
+    public static void resetLightLevels() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        ILevelRendererMixin lrm = ((ILevelRendererMixin) (Object) mc.levelRenderer);
+         savedLightLevels.forEach( (posId, lightLevel) -> {
+            lrm.setBlockDirty(BlockPos.of(posId));
+        });
+        savedLightLevels.clear();
+    }
+
+    public static void updateRender() {
+        if (ItemChangeHandler.HAS_TORCH_IN_HAND) updateRender(false, 10, false);
+    }
+
+    public static void updateRender(boolean force, int radius, boolean reset) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.levelRenderer == null) {
+            return;
+        }
+
+        BlockPos playerPos = mc.player.blockPosition();
+        if (!force && playerPos.equals(oldPos)) return;
+
+        oldPos = playerPos;
+
+        ILevelRendererMixin lrm = ((ILevelRendererMixin) (Object) mc.levelRenderer);
+        if (radius <= 0) lrm.setBlockDirty(playerPos);
+        else {
+            LayerLightEventListener llevl = mc.level.getLightEngine().getLayerListener(LightLayer.BLOCK);
+            IBlockLightEngine blockLightEngine = ((IBlockLightEngine) llevl);
+
+            resetLightLevels();
+
+            for (BlockPos pos : BlockPos.betweenClosed(playerPos.offset(-radius, -radius, -radius), playerPos.offset(radius, radius, radius))) {
+                long posId = pos.asLong();
+                //Integer level = savedLightLevels.get(posId);
+                //int oldValue = level != null ? level : llevl.getLightValue(pos);
+                int level = getLightLevel(pos, llevl.getLightValue(pos));
+                if (level >= 0) savedLightLevels.put(posId, level);
+                //else savedLightLevels.remove(posId);
+//                if (force) {
+//                    if (reset) savedLightLevels.remove(posId);
+//                    else savedLightLevels.put(posId, oldValue);
+//                }
+                //int lightLevel = getLightLevel(pos, oldValue);
+                //blockLightEngine.setLightLevel(posId, lightLevel);
+                lrm.setBlockDirty(pos);
+            }
+        }
     }
 
     public static void renderBlock(RenderLevelStageEvent event, BlockPos pos, Vec3 cameraPosition,
