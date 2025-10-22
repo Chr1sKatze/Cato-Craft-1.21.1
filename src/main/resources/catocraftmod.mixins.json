@@ -10,9 +10,7 @@
     "AnvilScreenHideRenameMixin",
     "AnvilScreenHideLabelsMixin",
     "ServerLevelMixin",
-    "ItemStackReinforcementMixin",
-    "LightTextureMixin",
-    "LightMapRendererMixin"
+    "ItemStackReinforcementMixin"
   ],
   "injectors": {
     "defaultRequire": 1

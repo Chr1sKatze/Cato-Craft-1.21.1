@@ -29,13 +29,6 @@ public class NetworkHandler {
         // Server → Client
         // ────────────────────────────────────────────────
 
-        // 1️⃣ RevelationGlowPacket
-        registrar.playToClient(
-                RevelationGlowPacket.TYPE,
-                RevelationGlowPacket.STREAM_CODEC,
-                RevelationGlowPacket::handle
-        );
-
         // 2️⃣ Unified EquipmentSyncPacket
         registrar.playToClient(
                 EquipmentSyncPacket.TYPE,

@@ -1,0 +1,11 @@
+{
+  "name": "test_layout",
+  "width": 9,
+  "height": 3,
+  "slots": [
+    { "id": "slot_1", "x": 62, "y": 17, "size": 18, "tagFilter": "", "optional": false },
+    { "id": "slot_2", "x": 80, "y": 17, "size": 18, "tagFilter": "", "optional": false },
+    { "id": "slot_3", "x": 62, "y": 35, "size": 18, "tagFilter": "", "optional": true },
+    { "id": "slot_4", "x": 80, "y": 35, "size": 18, "tagFilter": "", "optional": false }
+  ]
+}

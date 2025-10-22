@@ -3,7 +3,6 @@ package net.chriskatze.catocraftmod;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.chriskatze.catocraftmod.block.ModBlocks;
 import net.chriskatze.catocraftmod.capability.EquipmentCapabilityHandler;
-import net.chriskatze.catocraftmod.client.render.OreGlowRenderer;
 import net.chriskatze.catocraftmod.config.AnvilConfig;
 import net.chriskatze.catocraftmod.debug.EquipmentDebugCommand;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
@@ -11,6 +10,7 @@ import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
 import net.chriskatze.catocraftmod.menu.EquipmentMenu;
 import net.chriskatze.catocraftmod.menu.ModMenus;
+import net.chriskatze.catocraftmod.menu.runtime.DynamicMenuWorldData;
 import net.chriskatze.catocraftmod.menu.ui.UISchemaLoader;
 import net.chriskatze.catocraftmod.menu.layout.SlotLayoutLoader;
 import net.chriskatze.catocraftmod.network.NetworkHandler;
@@ -23,13 +23,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import org.slf4j.Logger;
+import net.chriskatze.catocraftmod.menu.client.screen.ModScreens;
 
 import com.mojang.logging.LogUtils;
 
@@ -95,10 +98,8 @@ public class CatocraftMod {
         // Client-only setup
         // ────────────────────────────────────────────────
         if (FMLLoader.getDist().isClient()) {
+            // Tooltip logic and reload listeners
             NeoForge.EVENT_BUS.register(ClientTooltipHandler.class);
-            OreGlowRenderer.registerReloadListener();
-
-            // register JSON reload listeners for layouts + UI schemas
             NeoForge.EVENT_BUS.addListener(this::onAddReloadListeners);
 
             // Pre-cache attributes for singleplayer debugging
@@ -191,12 +192,31 @@ public class CatocraftMod {
                         })
         );
 
-        // Equipment debug command
+        // 🔹 Existing debug and creator commands
         EquipmentDebugCommand.register(event.getDispatcher());
-        // Menu Creator command (client-only)
         if (net.neoforged.fml.loading.FMLLoader.getDist().isClient()) {
             net.chriskatze.catocraftmod.menucreator.MenuCreatorCommand.register(event.getDispatcher());
-            LOGGER.info("[CatocraftMod] Registered client-only MenuCreatorCommand for generic menu creation.");
+        }
+
+        // 🟢 Dynamic menu test command
+        net.chriskatze.catocraftmod.command.OpenMenuCommand.register(event.getDispatcher());
+
+        // 🟢 Manual cleanup command for dynamic menu data
+        net.chriskatze.catocraftmod.command.CleanDynamicMenusCommand.register(event.getDispatcher());
+
+        // 🟢 Creator Hub
+        net.chriskatze.catocraftmod.command.CreatorHubCommand.register(event.getDispatcher());
+    }
+
+    // ────────────────────────────────────────────────
+    // Dynamic Menu WorldData Cleanup
+    // ────────────────────────────────────────────────
+    @SubscribeEvent
+    public void onWorldSave(LevelEvent.Save event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            var data = DynamicMenuWorldData.get(level);
+            data.cleanup(level.registryAccess());
+            LOGGER.debug("[Catocraft] Cleaned up DynamicMenuWorldData for world {}", level.dimension().location());
         }
     }
 

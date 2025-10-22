@@ -5,6 +5,7 @@ import java.util.List;
 
 /**
  * Represents one editable slot element within the Menu Creator.
+ * Holds basic layout and logic metadata, and transient runtime drag data.
  */
 public class MenuCreatorSlotDefinition {
 
@@ -16,6 +17,10 @@ public class MenuCreatorSlotDefinition {
     public String group;
     public List<String> dependencies;
     public List<String> conflicts;
+
+    // 🔹 Runtime-only drag smoothing data (not serialized)
+    public transient Float tempDirX = null;
+    public transient Float tempDirY = null;
 
     public MenuCreatorSlotDefinition(String id, int x, int y) {
         this.id = id;
