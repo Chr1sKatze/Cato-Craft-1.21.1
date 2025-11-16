@@ -1,79 +1,117 @@
 package net.chriskatze.catocraftmod.menu.layout;
 
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.world.item.ItemStack;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates screen-space coordinates for inventory slots.
- * Supports both procedural and grid-based placement.
- * Automatically applies group offsets from SlotLayout.
+ * 🧱 MenuSlotPlacer — handles rendering and interaction for the menu grid editor.
+ *
+ * Draws the grid background, shows existing slot positions,
+ * and lets the user preview new ones visually (future drag-drop support).
  */
-public class MenuSlotPlacer {
+public class MenuSlotPlacer implements GuiEventListener, NarratableEntry {
 
-    public record SlotPosition(int x, int y) {}
+    private final int originX;
+    private final int originY;
+    private final int gridWidth;
+    private final int gridHeight;
+    private final int cellSize = 16;
 
-    private final List<SlotPosition> positions = new ArrayList<>();
+    private final List<SlotPreview> slots = new ArrayList<>();
 
-    /** Construct a placer directly from a SlotLayout definition. */
-    public MenuSlotPlacer(SlotLayout layout) {
-        int offsetX = layout.groupOffsetX();
-        int offsetY = layout.groupOffsetY();
+    private boolean focused = false; // required by GuiEventListener
 
-        if (layout.isGridMode()) {
-            buildGrid(layout, offsetX, offsetY);
-        } else {
-            buildProcedural(layout, offsetX, offsetY);
+    public MenuSlotPlacer(int originX, int originY, int gridWidth, int gridHeight) {
+        this.originX = originX;
+        this.originY = originY;
+        this.gridWidth = gridWidth;
+        this.gridHeight = gridHeight;
+    }
+
+    public void clearSlots() {
+        slots.clear();
+    }
+
+    public void addSlot(int gridX, int gridY) {
+        slots.add(new SlotPreview(gridX, gridY));
+    }
+
+    public List<SlotPreview> getSlots() {
+        return slots;
+    }
+
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+        // background panel
+        gfx.fill(originX - 1, originY - 1, originX + gridWidth + 1, originY + gridHeight + 1, 0xAA000000);
+
+        // vertical grid lines
+        for (int x = 0; x <= gridWidth; x += cellSize) {
+            gfx.fill(originX + x, originY, originX + x + 1, originY + gridHeight, 0x22000000);
+        }
+
+        // horizontal grid lines
+        for (int y = 0; y <= gridHeight; y += cellSize) {
+            gfx.fill(originX, originY + y, originX + gridWidth, originY + y + 1, 0x22000000);
+        }
+
+        // draw slot previews
+        for (SlotPreview slot : slots) {
+            int sx = originX + slot.x();
+            int sy = originY + slot.y();
+
+            int color = slot.isHovered(mouseX, mouseY, sx, sy, cellSize) ? 0x66FFFFFF : 0x33FFFFFF;
+            gfx.fill(sx, sy, sx + cellSize, sy + cellSize, color);
+            gfx.renderFakeItem(new ItemStack(net.minecraft.world.item.Items.CHEST), sx, sy);
         }
     }
 
-    /** Procedural layout mode (direction + spacing + wrap). */
-    private void buildProcedural(SlotLayout layout, int offsetX, int offsetY) {
-        int x = layout.originX() + offsetX;
-        int y = layout.originY() + offsetY;
-        int spacing = layout.spacing();
-        int wrapAfter = layout.wrapAfter();
-
-        // Generate a fixed pattern of positions — Menu decides how many to use.
-        int max = wrapAfter > 0 ? wrapAfter * 2 : 16;
-
-        for (int i = 0; i < max; i++) {
-            positions.add(new SlotPosition(x, y));
-
-            switch (layout.direction()) {
-                case HORIZONTAL -> x += spacing;
-                case VERTICAL -> y += spacing;
-            }
-
-            if (wrapAfter > 0 && (i + 1) % wrapAfter == 0) {
-                switch (layout.direction()) {
-                    case HORIZONTAL -> {
-                        x = layout.originX() + offsetX;
-                        y += spacing;
-                    }
-                    case VERTICAL -> {
-                        y = layout.originY() + offsetY;
-                        x += spacing;
-                    }
-                }
-            }
-        }
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // In future: add slot placement
+        return false;
     }
 
-    /** Grid / pattern layout mode. */
-    private void buildGrid(SlotLayout layout, int offsetX, int offsetY) {
-        int baseX = layout.originX() + offsetX;
-        int baseY = layout.originY() + offsetY;
-        int spacing = layout.spacing();
-
-        for (SlotLayout.Point p : layout.cells()) {
-            int x = baseX + p.x() * spacing;
-            int y = baseY + p.y() * spacing;
-            positions.add(new SlotPosition(x, y));
-        }
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return false;
     }
 
-    // Accessors
-    public List<SlotPosition> getPositions() { return positions; }
-    public SlotPosition get(int index) { return index < positions.size() ? positions.get(index) : null; }
-    public int size() { return positions.size(); }
+    // ────────────────────────────────────────────────
+    // Focus handling (required by GuiEventListener)
+    // ────────────────────────────────────────────────
+    @Override
+    public void setFocused(boolean focused) {
+        this.focused = focused;
+    }
+
+    @Override
+    public boolean isFocused() {
+        return focused;
+    }
+
+    // ────────────────────────────────────────────────
+    // Narration (unused, but required)
+    // ────────────────────────────────────────────────
+    @Override
+    public NarrationPriority narrationPriority() {
+        return NarrationPriority.NONE;
+    }
+
+    @Override
+    public void updateNarration(NarrationElementOutput narration) {}
+
+    // ────────────────────────────────────────────────
+    // Internal helper class
+    // ────────────────────────────────────────────────
+    public record SlotPreview(int x, int y) {
+        public boolean isHovered(int mx, int my, int sx, int sy, int size) {
+            return mx >= sx && mx < sx + size && my >= sy && my < sy + size;
+        }
+    }
 }

@@ -3,7 +3,7 @@ package net.chriskatze.catocraftmod.menu.event;
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.capability.EquipmentCapabilityHandler;
 import net.chriskatze.catocraftmod.capability.PlayerEquipmentCapability;
-import net.chriskatze.catocraftmod.network.EquipmentSyncHelper;
+import net.chriskatze.catocraftmod.network.MenuSyncHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -31,7 +31,7 @@ public class PlayerJoinReloadListener {
             cap.scheduleHealthNormalization(20);
 
             // 🔹 Instant client sync
-            EquipmentSyncHelper.syncToClient(player);
+            MenuSyncHelper.syncToClient(player);
 
             CatocraftMod.LOGGER.info("[Catocraft] Refreshed and synced layouts for {} on join.",
                     player.getGameProfile().getName());

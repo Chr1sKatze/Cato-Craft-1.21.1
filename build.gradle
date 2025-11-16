@@ -168,3 +168,31 @@ idea {
 tasks.named("clean").configure {
     finalizedBy("prepareClientRun", "prepareServerRun", "prepareDataRun")
 }
+
+// ────────────────────────────────────────────────
+// 🛡️ Sanity check: verify compiled class integrity
+// ────────────────────────────────────────────────
+tasks.register('verifyClasses') {
+    group = 'verification'
+    description = 'Checks for 0-byte or corrupt .class files before running the client.'
+
+    doLast {
+        def classFiles = fileTree("${buildDir}/classes/java/main") {
+            include '**/*.class'
+        }
+        def badFiles = classFiles.filter { it.length() == 0 }
+
+        if (!badFiles.empty) {
+            println "❌ Detected ${badFiles.size()} invalid .class file(s):"
+            badFiles.each { println "   - ${it}" }
+            throw new GradleException("Build aborted — found empty .class files.")
+        } else {
+            println "✅ No invalid .class files detected."
+        }
+    }
+}
+
+// Automatically run it before launching the client
+tasks.named('runClient').configure {
+    dependsOn tasks.named('verifyClasses')
+}

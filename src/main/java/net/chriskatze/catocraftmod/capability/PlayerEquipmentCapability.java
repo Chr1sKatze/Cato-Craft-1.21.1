@@ -6,7 +6,7 @@ import net.chriskatze.catocraftmod.menu.layout.EquipmentGroup;
 import net.chriskatze.catocraftmod.menu.layout.SlotEquipValidator;
 import net.chriskatze.catocraftmod.menu.layout.SlotLayoutDefinition;
 import net.chriskatze.catocraftmod.menu.layout.SlotLayoutLoader;
-import net.chriskatze.catocraftmod.network.EquipmentSyncHelper;
+import net.chriskatze.catocraftmod.network.MenuSyncHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -187,18 +187,16 @@ public class PlayerEquipmentCapability {
         // ───────────────────────────────────────────────
         // Equip validation
         // ───────────────────────────────────────────────
-        if (!stack.isEmpty()) {
-            boolean canEquip = SlotEquipValidator.canEquip(owner, groupId, equippedGroupIds);
-            if (!canEquip) {
-                owner.getInventory().placeItemBackInInventory(stack);
-                return;
-            }
+        boolean canEquip = SlotEquipValidator.canEquip(owner, group, getEquippedGroups());
+        if (!canEquip) {
+            owner.getInventory().placeItemBackInInventory(stack);
+            return;
+        }
 
-            boolean validItem = SlotEquipValidator.canEquipItem(owner, groupId, stack);
-            if (!validItem) {
-                owner.getInventory().placeItemBackInInventory(stack);
-                return;
-            }
+        boolean validItem = SlotEquipValidator.canEquipItem(owner, group, stack);
+        if (!validItem) {
+            owner.getInventory().placeItemBackInInventory(stack);
+            return;
         }
 
         // ───────────────────────────────────────────────
@@ -449,7 +447,7 @@ public class PlayerEquipmentCapability {
                     if (!stack.isEmpty()) {
                         try {
                             // Only restore if still valid for that slot group
-                            boolean validItem = SlotEquipValidator.canEquipItem(owner, group.getGroupId(), stack);
+                            boolean validItem = SlotEquipValidator.canEquipItem(owner, group, stack);
                             if (validItem) {
                                 handler.setStackInSlot(i, stack);
                             } else {
@@ -546,8 +544,8 @@ public class PlayerEquipmentCapability {
 
     public void tick() {
         tickHealthNormalizationIfNeeded();
-        if (shouldSyncToClient()) {
-            EquipmentSyncHelper.syncToClient(owner);
+        if (shouldSyncToClient() && owner != null) {
+            MenuSyncHelper.forceSyncToClient(owner);
         }
     }
 

@@ -1,11 +1,19 @@
 package net.chriskatze.catocraftmod.menu.ui;
 
-import com.google.gson.annotations.SerializedName;
-import java.util.List;
+import net.minecraft.client.gui.GuiGraphics;
+
+import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * Marker interface for all UI schema elements.
+ * Base interface for all dynamic-menu UI components.
+ * Defines a render method and basic geometry data accessors.
  */
-public sealed interface UIElement permits LabelElement, SlotGroupElement, CharacterViewElement {
+public interface UIElement {
+    int x();
+    int y();
+    int width();
+    int height();
 
+    /** Draws this element each frame. */
+    void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick);
 }

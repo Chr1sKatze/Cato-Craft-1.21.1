@@ -14,55 +14,52 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Validates equipment actions and items based on SlotLayoutDefinition JSON rules.
- * Works with both ResourceLocation-based and EquipmentGroup-based lookups.
+ * ✅ SlotEquipValidator — unified rule validator for dynamic menus
+ *
+ * Validates whether a group or item can be equipped based on JSON definitions
+ * loaded through {@link SlotLayoutLoader}. Supports both client- and server-side
+ * checks, requirements, conflicts, and valid item rules.
  */
 public class SlotEquipValidator {
 
     // ────────────────────────────────────────────────
-    // GROUP VALIDATION (dependency + conflict rules)
+    // GROUP VALIDATION — dependency & conflict logic
     // ────────────────────────────────────────────────
     public static boolean canEquip(ServerPlayer player, EquipmentGroup targetGroup, Set<EquipmentGroup> equippedGroups) {
         SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(targetGroup);
         if (def == null) return true;
 
-        String targetKey = targetGroup.getKey(); // e.g. "earrings"
+        String targetKey = targetGroup.getKey();
 
         // 1️⃣ Requirements
-        List<String> requires = def.requires();
-        if (requires != null && !requires.isEmpty()) {
-            for (String req : requires) {
-                boolean has = equippedGroups.stream()
-                        .anyMatch(g -> g.getKey().equalsIgnoreCase(req));
-                if (!has) {
-                    player.displayClientMessage(Component.literal("⚠ You must equip " + req + " first!"), true);
-                    return false;
-                }
+        for (String req : def.requires()) {
+            boolean has = equippedGroups.stream()
+                    .anyMatch(g -> g.getKey().equalsIgnoreCase(req));
+            if (!has) {
+                player.displayClientMessage(Component.literal("⚠ You must equip " + req + " first!"), true);
+                return false;
             }
         }
 
         // 2️⃣ Conflicts
-        List<String> conflicts = def.conflicts();
-        if (conflicts != null && !conflicts.isEmpty()) {
-            for (String conflict : conflicts) {
-                boolean hasConflict = equippedGroups.stream()
-                        .anyMatch(g -> g.getKey().equalsIgnoreCase(conflict));
-                if (hasConflict) {
-                    player.displayClientMessage(
-                            Component.literal("You cannot equip " + targetKey + " while " + conflict + " is equipped!"),
-                            true
-                    );
-                    return false;
-                }
+        for (String conflict : def.conflicts()) {
+            boolean hasConflict = equippedGroups.stream()
+                    .anyMatch(g -> g.getKey().equalsIgnoreCase(conflict));
+            if (hasConflict) {
+                player.displayClientMessage(
+                        Component.literal("You cannot equip " + targetKey + " while " + conflict + " is equipped!"),
+                        true
+                );
+                return false;
             }
         }
 
-        // 3️⃣ Tag-based group collisions (mutually exclusive categories)
+// 3️⃣ Tag-based mutual exclusion (same category slots)
         if (def.tags != null && !def.tags.isEmpty()) {
             Set<String> thisTags = new HashSet<>(def.tags);
             for (EquipmentGroup equipped : equippedGroups) {
                 SlotLayoutDefinition otherDef = SlotLayoutLoader.getDefinition(equipped);
-                if (otherDef == null || otherDef.tags == null || otherDef.tags.isEmpty()) continue;
+                if (otherDef == null || otherDef.tags == null) continue;
 
                 for (String tag : otherDef.tags) {
                     if (thisTags.contains(tag)) {
@@ -80,80 +77,52 @@ public class SlotEquipValidator {
     }
 
     // ────────────────────────────────────────────────
-    // ITEM VALIDATION (valid_items list in JSON)
+    // ITEM VALIDATION — based on "valid_items" list
     // ────────────────────────────────────────────────
-    public static boolean canEquipItem(ServerPlayer player, EquipmentGroup targetGroup, ItemStack stack) {
+    public static boolean canEquipItem(ServerPlayer player, EquipmentGroup group, ItemStack stack) {
         if (stack.isEmpty()) return true;
 
-        SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(targetGroup);
+        SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(group);
         if (def == null) return true;
 
         List<String> rules = def.valid_items();
         if (rules == null || rules.isEmpty()) return true;
 
-        boolean allowed = false;
-
-        for (String rule : rules) {
-            if (rule == null || rule.isBlank()) continue;
-
-            // Tag rule (#mod:tag)
-            if (rule.startsWith("#")) {
-                String idStr = rule.substring(1);
-                ResourceLocation tagId = ResourceLocation.tryParse(idStr);
-                if (tagId != null) {
-                    TagKey<Item> key = TagKey.create(net.minecraft.core.registries.Registries.ITEM, tagId);
-                    if (stack.is(key)) {
-                        allowed = true;
-                        break;
-                    }
-                }
-            } else {
-                // Direct item id (mod:item)
-                ResourceLocation itemId = ResourceLocation.tryParse(rule);
-                if (itemId != null) {
-                    Item match = BuiltInRegistries.ITEM.get(itemId);
-                    if (match != null && match != net.minecraft.world.item.Items.AIR && stack.is(match)) {
-                        allowed = true;
-                        break;
-                    }
-                }
-            }
-        }
-
+        boolean allowed = matchesAnyRule(stack, rules);
         if (!allowed) {
             player.displayClientMessage(
-                    Component.literal("That item cannot be equipped in " + targetGroup.getKey() + "."),
+                    Component.literal("That item cannot be equipped in " + group.getKey() + "."),
                     true
             );
         }
-
         return allowed;
     }
 
     // ────────────────────────────────────────────────
-    // NEW: Client-safe overload (Player + ResourceLocation)
+    // CLIENT-SAFE OVERLOAD — used from GUI slots
     // ────────────────────────────────────────────────
-    /** Client-safe check usable from GUI/slots: delegates to server when possible, otherwise validates locally. */
     public static boolean canEquipItem(Player player, ResourceLocation groupId, ItemStack stack) {
-        // If we have a ServerPlayer, use the authoritative server method
-        if (player instanceof ServerPlayer sp) {
+        if (player instanceof ServerPlayer serverPlayer) {
             EquipmentGroup group = EquipmentGroup.fromId(groupId);
-            if (group == null) return true; // unknown group → don't block
-            return canEquipItem(sp, group, stack);
+            return group == null || canEquipItem(serverPlayer, group, stack);
         }
 
-        // Pure client: approximate the same rules without sending messages
+        // Client-only fallback
         if (stack.isEmpty()) return true;
-
         SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(groupId);
-        if (def == null) return true;
+        if (def == null || def.valid_items().isEmpty()) return true;
+        return matchesAnyRule(stack, def.valid_items());
+    }
 
-        List<String> rules = def.valid_items();
-        if (rules == null || rules.isEmpty()) return true;
+    // ────────────────────────────────────────────────
+    // Helper: rule matcher
+    // ────────────────────────────────────────────────
+    private static boolean matchesAnyRule(ItemStack stack, List<String> rules) {
+        for (String raw : rules) {
+            if (raw == null || raw.isBlank()) continue;
+            String rule = raw.trim();
 
-        for (String rule : rules) {
-            if (rule == null || rule.isBlank()) continue;
-
+            // Tag rule (#mod:tag)
             if (rule.startsWith("#")) {
                 ResourceLocation tagId = ResourceLocation.tryParse(rule.substring(1));
                 if (tagId != null) {
@@ -161,10 +130,11 @@ public class SlotEquipValidator {
                     if (stack.is(key)) return true;
                 }
             } else {
+                // Direct item id (mod:item)
                 ResourceLocation itemId = ResourceLocation.tryParse(rule);
                 if (itemId != null) {
-                    Item match = BuiltInRegistries.ITEM.get(itemId);
-                    if (match != null && match != net.minecraft.world.item.Items.AIR && stack.is(match)) {
+                    Item item = BuiltInRegistries.ITEM.get(itemId);
+                    if (item != null && item != net.minecraft.world.item.Items.AIR && stack.is(item)) {
                         return true;
                     }
                 }
@@ -174,14 +144,12 @@ public class SlotEquipValidator {
     }
 
     // ────────────────────────────────────────────────
-    // BACKWARD COMPATIBILITY (ResourceLocation overloads)
+    // Legacy compatibility overloads (kept temporarily)
     // ────────────────────────────────────────────────
+    @Deprecated(forRemoval = true)
     public static boolean canEquip(ServerPlayer player, ResourceLocation groupId, Set<ResourceLocation> equippedGroups) {
         EquipmentGroup group = EquipmentGroup.fromId(groupId);
-        if (group == null) {
-            // fallback to old behavior if not mapped
-            return legacyCanEquip(player, groupId, equippedGroups);
-        }
+        if (group == null) return true;
         Set<EquipmentGroup> converted = new HashSet<>();
         for (ResourceLocation id : equippedGroups) {
             EquipmentGroup g = EquipmentGroup.fromId(id);
@@ -190,29 +158,9 @@ public class SlotEquipValidator {
         return canEquip(player, group, converted);
     }
 
+    @Deprecated(forRemoval = true)
     public static boolean canEquipItem(ServerPlayer player, ResourceLocation groupId, ItemStack stack) {
         EquipmentGroup group = EquipmentGroup.fromId(groupId);
-        if (group == null) {
-            // fallback for legacy slots
-            return legacyCanEquipItem(player, groupId, stack);
-        }
-        return canEquipItem(player, group, stack);
-    }
-
-    // ────────────────────────────────────────────────
-    // Legacy fallback (keeps compatibility)
-    // ────────────────────────────────────────────────
-    private static boolean legacyCanEquip(ServerPlayer player, ResourceLocation targetGroupId, Set<ResourceLocation> equippedGroups) {
-        SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(targetGroupId);
-        if (def == null) return true;
-        // identical to old logic — omitted for brevity, can copy your existing version
-        return true;
-    }
-
-    private static boolean legacyCanEquipItem(ServerPlayer player, ResourceLocation targetGroupId, ItemStack stack) {
-        SlotLayoutDefinition def = SlotLayoutLoader.getDefinition(targetGroupId);
-        if (def == null) return true;
-        // identical to old logic — omitted for brevity
-        return true;
+        return group == null || canEquipItem(player, group, stack);
     }
 }

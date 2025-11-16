@@ -2,7 +2,7 @@ package net.chriskatze.catocraftmod.menu.slot;
 
 import net.chriskatze.catocraftmod.menu.layout.EquipmentGroup;
 import net.chriskatze.catocraftmod.menu.layout.SlotEquipValidator;
-import net.chriskatze.catocraftmod.network.EquipmentSlotUpdatePacket;
+import net.chriskatze.catocraftmod.network.MenuSlotUpdatePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +31,7 @@ public class ModifiableSlot extends Slot {
 
     @Override
     public void set(ItemStack stack) {
+        // Temporarily suppress sync to avoid duplicate sends
         suppressNextSync = true;
         super.set(stack);
         suppressNextSync = false;
@@ -42,11 +43,13 @@ public class ModifiableSlot extends Slot {
 
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
+
+        // Only send if running on the client
         if (player == null || player.level() == null || !player.level().isClientSide) return;
         if (suppressNextSync) return;
 
         ItemStack stack = this.container.getItem(this.index);
-        EquipmentSlotUpdatePacket.sendToServer(group, groupIndex, stack);
+        MenuSlotUpdatePacket.sendToServer(group, groupIndex, stack);
     }
 
     // ────────────────────────────────────────────────
@@ -58,6 +61,7 @@ public class ModifiableSlot extends Slot {
         Player player = Minecraft.getInstance().player;
         if (player == null) return false;
 
+        // Delegate logic to SlotEquipValidator (for tag & rule checks)
         return SlotEquipValidator.canEquipItem(player, group.getGroupId(), stack);
     }
 

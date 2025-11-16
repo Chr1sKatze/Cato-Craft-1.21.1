@@ -1,7 +1,6 @@
 package net.chriskatze.catocraftmod.menu.runtime;
 
 import net.chriskatze.catocraftmod.creator.menu.MenuLayout;
-import net.chriskatze.catocraftmod.creator.menu.MenuSlotDefinition;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -9,11 +8,20 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.ResultContainer;
 
+import java.util.List;
 
 /**
  * DynamicMenu builds its slot layout from a MenuLayout JSON.
- * Now supports persistent storage per-player (temporary, non-file).
+ * Supports runtime SlotType logic via RuntimeSlotBuilder.
+ *
+ * 🧠 In this version:
+ *  - Only JSON-defined slots are added (no vanilla player inventory).
+ *  - layout.getWidth()/Height() are treated as pixel dimensions.
+ *  - Each slot comes directly from the editor’s coordinates.
  */
 public class DynamicMenu extends AbstractContainerMenu {
 
@@ -21,43 +29,40 @@ public class DynamicMenu extends AbstractContainerMenu {
     private final ItemStackHandler handler;
     private final Player player;
 
+    // Optional extra containers (for crafting/result/misc)
+    private final Container miscInv = new SimpleContainer(20);
+    private final Container craftInv = new SimpleContainer(9);
+    private final ResultContainer resultInv = new ResultContainer();
+
     public DynamicMenu(MenuType<?> type, int id, Inventory playerInv, MenuLayout layout) {
         super(type, id);
-        this.layout = layout != null ? layout : new MenuLayout("fallback", 9, 3);
+        this.layout = layout != null ? layout : new MenuLayout("fallback", 176, 166);
         this.player = playerInv.player;
 
-        // 🧠 Try to reuse or create a new handler for this layout
+        // Persistent handler (for custom slots)
         this.handler = DynamicMenuStorage.getOrCreate(player, this.layout.getName(), this.layout.getSlots().size());
         DynamicMenuStorage.setLastOpened(player, this.layout.getName());
 
         // ────────────────────────────────────────────────
-        // Layout-defined slots
+        // Build all slots from JSON
         // ────────────────────────────────────────────────
-        if (this.layout.getSlots() != null && !this.layout.getSlots().isEmpty()) {
-            for (int i = 0; i < this.layout.getSlots().size(); i++) {
-                MenuSlotDefinition def = this.layout.getSlots().get(i);
-
-                this.addSlot(new Slot(new HandlerWrapper(handler, i), i, def.getX(), def.getY()) {
-                    @Override
-                    public boolean mayPlace(ItemStack stack) {
-                        return super.mayPlace(stack); // future tag validation
-                    }
-                });
+        if (layout.getSlots() != null && !layout.getSlots().isEmpty()) {
+            List<Slot> builtSlots = RuntimeSlotBuilder.buildSlots(
+                    layout.getSlots(),
+                    playerInv,
+                    craftInv,
+                    resultInv,
+                    miscInv,
+                    player
+            );
+            for (Slot slot : builtSlots) {
+                this.addSlot(slot);
             }
         }
 
-        // ────────────────────────────────────────────────
-        // Player inventory
-        // ────────────────────────────────────────────────
-        addPlayerInventory(playerInv, this.layout.getHeight() * 18 + 40);
-    }
-
-    private void addPlayerInventory(Inventory inv, int offsetY) {
-        for (int row = 0; row < 3; ++row)
-            for (int col = 0; col < 9; ++col)
-                addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, offsetY + row * 18));
-        for (int col = 0; col < 9; ++col)
-            addSlot(new Slot(inv, col, 8 + col * 18, offsetY + 58));
+        // 🔸 Do NOT add vanilla player inventory automatically
+        // That caused duplicated slots and misaligned layouts.
+        // You can add a toggle or command later if you want the player inventory visible.
     }
 
     @Override
@@ -73,7 +78,8 @@ public class DynamicMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return ItemStack.EMPTY; // handle shift-click later
+        // TODO: handle shift-click routing later
+        return ItemStack.EMPTY;
     }
 
     public MenuLayout getLayout() {

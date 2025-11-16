@@ -8,7 +8,7 @@ import net.chriskatze.catocraftmod.capability.PlayerEquipmentCapability;
 import net.chriskatze.catocraftmod.capability.util.EquipmentUtils;
 import net.chriskatze.catocraftmod.menu.layout.EquipmentGroup;
 import net.chriskatze.catocraftmod.menu.layout.SlotEquipValidator;
-import net.chriskatze.catocraftmod.network.EquipmentSyncHelper;
+import net.chriskatze.catocraftmod.network.MenuSyncHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -136,7 +136,7 @@ public abstract class EquippableItemBase extends Item {
     private void equipItem(Player player, PlayerEquipmentCapability cap, ItemStackHandler handler, int slot, ItemStack stack) {
         handler.setStackInSlot(slot, stack.copy());
         cap.applyAllAttributes();
-        EquipmentSyncHelper.syncToClient((ServerPlayer) player);
+        MenuSyncHelper.syncToClient((ServerPlayer) player);
 
         playEquipSound(player);
         player.displayClientMessage(Component.literal("Equipped item!").withStyle(ChatFormatting.GRAY), true);
@@ -149,7 +149,7 @@ public abstract class EquippableItemBase extends Item {
         handler.setStackInSlot(slot, ItemStack.EMPTY);
 
         cap.applyAllAttributes();
-        EquipmentSyncHelper.syncToClient((ServerPlayer) player);
+        MenuSyncHelper.syncToClient((ServerPlayer) player);
 
         playUnequipSound(player);
         player.displayClientMessage(Component.literal("Unequipped item.").withStyle(ChatFormatting.GRAY), true);

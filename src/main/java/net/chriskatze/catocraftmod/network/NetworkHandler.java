@@ -2,65 +2,52 @@ package net.chriskatze.catocraftmod.network;
 
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * 📡 Central registration for all Catocraft network packets.
+ * 📡 NetworkHandler — unified packet registry
  *
- * Handles both:
- *  - server → client syncs (e.g. EquipmentSyncPacket)
- *  - client → server updates (e.g. EquipmentSlotUpdatePacket)
+ * Registers all custom Catocraft payloads for menu sync, slot updates,
+ * and other gameplay communications.
  */
-public class NetworkHandler {
+public final class NetworkHandler {
 
-    public static final ResourceLocation REVELATION_GLOW_ID =
-            ResourceLocation.fromNamespaceAndPath(CatocraftMod.MOD_ID, "revelation_glow");
+    private NetworkHandler() {}
 
     public static void register(final RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(CatocraftMod.MOD_ID)
+        PayloadRegistrar registrar = event
+                .registrar(CatocraftMod.MOD_ID)
                 .versioned("1")
                 .optional();
 
         // ────────────────────────────────────────────────
-        // Server → Client
+        // 🖥️ Server → Client
         // ────────────────────────────────────────────────
-
-        // 2️⃣ Unified EquipmentSyncPacket
         registrar.playToClient(
-                EquipmentSyncPacket.TYPE,
-                EquipmentSyncPacket.STREAM_CODEC,
-                EquipmentSyncPacket::handle
+                MenuSyncHelper.FULL_SYNC_TYPE,
+                MenuSyncHelper.FULL_SYNC_CODEC,
+                MenuSyncHelper::handleFullSync
         );
+
+        // (Optional) future: add ClientMenuOpener or partial sync packets here
+        // registrar.playToClient(ClientMenuOpener.TYPE, ClientMenuOpener.STREAM_CODEC, ClientMenuOpener::handle);
 
         // ────────────────────────────────────────────────
-        // Client → Server
+        // 🧭 Client → Server
         // ────────────────────────────────────────────────
-
-        // 3️⃣ OpenEquipmentMenuPacket
         registrar.playToServer(
-                OpenEquipmentMenuPacket.TYPE,
-                OpenEquipmentMenuPacket.STREAM_CODEC,
-                OpenEquipmentMenuPacket::handle
+                MenuSlotUpdatePacket.TYPE,
+                MenuSlotUpdatePacket.STREAM_CODEC,
+                MenuSlotUpdatePacket::handle
         );
 
-        // 4️⃣ EquipmentSlotUpdatePacket (slot drag/drop updates)
-        registrar.playToServer(
-                EquipmentSlotUpdatePacket.TYPE,
-                EquipmentSlotUpdatePacket.STREAM_CODEC,
-                EquipmentSlotUpdatePacket::handle
-        );
-
-        CatocraftMod.LOGGER.info(
-                "[NetworkHandler] Registered packets: revelation_glow, equipment_sync, open_equipment_menu, equipment_slot_update"
-        );
+        CatocraftMod.LOGGER.info("[NetworkHandler] Registered dynamic menu payloads");
     }
 
-    /** Utility for sending to one specific player (server → client). */
-    public static void sendToPlayer(ServerPlayer player, CustomPacketPayload packet) {
-        PacketDistributor.sendToPlayer(player, packet);
+    /** Utility for sending payloads to a specific player. */
+    public static void sendToPlayer(net.minecraft.server.level.ServerPlayer player, CustomPacketPayload payload) {
+        PacketDistributor.sendToPlayer(player, payload);
     }
 }

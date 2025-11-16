@@ -1,6 +1,6 @@
 package net.chriskatze.catocraftmod.creator.common;
 
-import net.chriskatze.catocraftmod.creator.hub.CreatorType;
+import net.chriskatze.catocraftmod.creatorhub.CreatorType;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;

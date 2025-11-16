@@ -4,7 +4,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.chriskatze.catocraftmod.block.ModBlocks;
 import net.chriskatze.catocraftmod.capability.EquipmentCapabilityHandler;
 import net.chriskatze.catocraftmod.config.AnvilConfig;
-import net.chriskatze.catocraftmod.debug.EquipmentDebugCommand;
 import net.chriskatze.catocraftmod.enchantment.ModEnchantments;
 import net.chriskatze.catocraftmod.item.ModCreativeModeTabs;
 import net.chriskatze.catocraftmod.item.ModItems;
@@ -26,13 +25,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
+import net.chriskatze.catocraftmod.util.ItemTypeRegistry;
 import org.slf4j.Logger;
-import net.chriskatze.catocraftmod.menu.client.screen.ModScreens;
 
 import com.mojang.logging.LogUtils;
 
@@ -45,8 +45,10 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 /**
- * Main mod entrypoint for CatoCraft.
- * Handles registration of content, capabilities, networking, and events.
+ * 🐱 Main mod entrypoint for CatoCraft.
+ *
+ * Handles registration of all content, networking, capabilities, attributes,
+ * reload listeners, and commands.
  */
 @Mod(CatocraftMod.MOD_ID)
 public class CatocraftMod {
@@ -61,19 +63,26 @@ public class CatocraftMod {
     public CatocraftMod(IEventBus modEventBus, ModContainer modContainer) {
 
         // ────────────────────────────────────────────────
-        // Common Setup
+        // ⚙️ Common Setup
         // ────────────────────────────────────────────────
         modEventBus.addListener(this::commonSetup);
+
+        // ────────────────────────────────────────────────
+        // 🌐 Networking & Capabilities
+        // ────────────────────────────────────────────────
         modEventBus.addListener(NetworkHandler::register);
-
-        // 🔹 Capabilities
         modEventBus.addListener(EquipmentCapabilityHandler::onRegisterCapabilities);
+        LOGGER.info("[CatocraftMod] Queued network + capability registration.");
 
-        // 🔹 Attributes
+        // ────────────────────────────────────────────────
+        // 🧬 Attributes
+        // ────────────────────────────────────────────────
         ModAttributes.ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(this::onEntityAttributeModify);
 
-        // 🔹 Content registration
+        // ────────────────────────────────────────────────
+        // 🧱 Content Registration
+        // ────────────────────────────────────────────────
         ModMenus.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);
@@ -82,20 +91,18 @@ public class CatocraftMod {
         ModSounds.register(modEventBus);
 
         // ────────────────────────────────────────────────
-        // Global Event Bus
+        // 🌍 Global Event Bus
         // ────────────────────────────────────────────────
         NeoForge.EVENT_BUS.register(this);
-
-        // 🔹 Global runtime listeners
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
 
         // ────────────────────────────────────────────────
-        // Creative Tab Setup
+        // 🎨 Creative Tab Setup
         // ────────────────────────────────────────────────
         modEventBus.addListener(this::addCreative);
 
         // ────────────────────────────────────────────────
-        // Client-only setup
+        // 💻 Client-only Setup
         // ────────────────────────────────────────────────
         if (FMLLoader.getDist().isClient()) {
             // Tooltip logic and reload listeners
@@ -117,10 +124,19 @@ public class CatocraftMod {
     // ────────────────────────────────────────────────
     // Setup Phase
     // ────────────────────────────────────────────────
-    private void commonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+    private void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            // 🧱 Load Anvil configuration
             AnvilConfig.loadConfig();
             LOGGER.info("[CatocraftMod] Loaded Anvil JSON configuration.");
+
+            // 📘 Load item type definitions
+            try {
+                ItemTypeRegistry.load();
+                LOGGER.info("[CatocraftMod] Loaded ItemTypeRegistry from data/catocraft/item_types.json");
+            } catch (Exception e) {
+                LOGGER.error("[CatocraftMod] ⚠ Failed to load ItemTypeRegistry: {}", e.toString());
+            }
         });
     }
 
@@ -130,7 +146,6 @@ public class CatocraftMod {
     private void onAddReloadListeners(AddReloadListenerEvent event) {
         // Existing SlotLayout loader
         event.addListener(new SlotLayoutLoader());
-
         // ✅ New UISchema loader for dynamic GUIs
         event.addListener(new UISchemaLoader());
 
@@ -180,6 +195,9 @@ public class CatocraftMod {
         LOGGER.info("[CatocraftMod] Registered elemental attributes for all living entities.");
     }
 
+    // ────────────────────────────────────────────────
+    // Commands
+    // ────────────────────────────────────────────────
     private void registerCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
                 LiteralArgumentBuilder.<CommandSourceStack>literal("open_equipmentmenu")
@@ -187,25 +205,19 @@ public class CatocraftMod {
                         .executes(ctx -> {
                             ServerPlayer player = ctx.getSource().getPlayerOrException();
                             player.openMenu(new EquipmentMenu.Provider());
-                            CatocraftMod.LOGGER.info("[Debug] Opened EquipmentMenu for {}", player.getName().getString());
+                            LOGGER.info("[Debug] Opened EquipmentMenu for {}", player.getName().getString());
                             return 1;
                         })
         );
 
-        // 🔹 Existing debug and creator commands
-        EquipmentDebugCommand.register(event.getDispatcher());
-        if (net.neoforged.fml.loading.FMLLoader.getDist().isClient()) {
-            net.chriskatze.catocraftmod.menucreator.MenuCreatorCommand.register(event.getDispatcher());
-        }
-
-        // 🟢 Dynamic menu test command
+        // 🟢 Dynamic menu system commands
         net.chriskatze.catocraftmod.command.OpenMenuCommand.register(event.getDispatcher());
-
-        // 🟢 Manual cleanup command for dynamic menu data
         net.chriskatze.catocraftmod.command.CleanDynamicMenusCommand.register(event.getDispatcher());
-
-        // 🟢 Creator Hub
         net.chriskatze.catocraftmod.command.CreatorHubCommand.register(event.getDispatcher());
+
+        // 🧩 Menu Creator Test Command (opens test container/screen)
+        net.chriskatze.catocraftmod.command.MenuCreatorTestCommand.register(event.getDispatcher());
+        LOGGER.info("[Commands] Registered /menucreator test command");
     }
 
     // ────────────────────────────────────────────────

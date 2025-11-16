@@ -3,6 +3,7 @@ package net.chriskatze.catocraftmod.menu;
 import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.menu.data.MenuLayoutLoader;
 import net.chriskatze.catocraftmod.menu.runtime.DynamicMenu;
+import net.chriskatze.catocraftmod.menu.runtime.MenuCreatorTestMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -37,14 +38,43 @@ public class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<DynamicMenu>> DYNAMIC_MENU =
             MENUS.register("dynamic", () ->
                     IMenuTypeExtension.create((int windowId, Inventory inv, RegistryFriendlyByteBuf buf) -> {
-                        // Read layout ID sent from server
-                        ResourceLocation id = buf.readResourceLocation();
+                        // ✅ Safe default layout ID if none provided
+                        ResourceLocation layoutId = CatocraftMod.id("default_layout");
 
-                        // Load the same layout on the client side
-                        var layout = MenuLayoutLoader.safeLoad(id);
+                        if (buf != null) {
+                            try {
+                                layoutId = buf.readResourceLocation();
+                            } catch (Exception e) {
+                                CatocraftMod.LOGGER.warn("[ModMenus] Failed to read layout ID from buffer: {}", e.toString());
+                            }
+                        } else {
+                            CatocraftMod.LOGGER.warn("[ModMenus] Received null buffer when opening DynamicMenu; using fallback '{}'", layoutId);
+                        }
+
+                        // Load layout client-side (safeLoad handles missing files gracefully)
+                        var layout = MenuLayoutLoader.safeLoad(layoutId);
 
                         return new DynamicMenu(ModMenus.DYNAMIC_MENU.get(), windowId, inv, layout);
                     })
+            );
+
+    // ────────────────────────────────────────────────
+    // Menu Creator Menu (for testing + editor linkage)
+    // ────────────────────────────────────────────────
+    public static final DeferredHolder<MenuType<?>, MenuType<MenuCreatorMenu>> MENU_CREATOR =
+            MENUS.register("menu_creator", () ->
+                    IMenuTypeExtension.create((id, inventory, player) ->
+                            new MenuCreatorMenu(id, inventory))
+            );
+
+    // ────────────────────────────────────────────────
+    // 🧪 Menu Creator Test Menu (runtime test screen)
+    // ────────────────────────────────────────────────
+    public static final DeferredHolder<MenuType<?>, MenuType<MenuCreatorTestMenu>> TEST_MENU =
+            MENUS.register("menu_creator_test", () ->
+                    IMenuTypeExtension.create((id, inventory, player) ->
+                            new MenuCreatorTestMenu(ModMenus.TEST_MENU.get(), id, inventory)
+                    )
             );
 
     // ────────────────────────────────────────────────

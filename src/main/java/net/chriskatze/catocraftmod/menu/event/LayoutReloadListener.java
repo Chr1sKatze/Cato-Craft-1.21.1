@@ -4,7 +4,7 @@ import net.chriskatze.catocraftmod.CatocraftMod;
 import net.chriskatze.catocraftmod.capability.PlayerEquipmentCapability;
 import net.chriskatze.catocraftmod.capability.EquipmentCapabilityHandler;
 import net.chriskatze.catocraftmod.menu.layout.EquipmentGroup;
-import net.chriskatze.catocraftmod.network.EquipmentSyncHelper;
+import net.chriskatze.catocraftmod.network.MenuSyncHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -76,7 +76,7 @@ public class LayoutReloadListener {
             cap.scheduleHealthNormalization(20);
 
             // 🔹 Consistent behavior: instant client sync
-            EquipmentSyncHelper.syncToClient(player);
+            MenuSyncHelper.syncToClient(player);
 
             CatocraftMod.LOGGER.debug("[Catocraft] Reconciled and synced layouts for {}", player.getGameProfile().getName());
         }
