@@ -38,21 +38,12 @@ public final class NetworkHandler {
         // 🧭 Client → Server
         // ────────────────────────────────────────────────
         registrar.playToServer(
-                MenuSlotUpdatePacket.TYPE,
-                MenuSlotUpdatePacket.STREAM_CODEC,
-                MenuSlotUpdatePacket::handle
-        );
-
-        CatocraftMod.LOGGER.info("[NetworkHandler] Registered dynamic menu payloads");
-        registrar.playToServer(
                 KeyPressPacket.TYPE,
                 KeyPressPacket.STREAM_CODEC,
                 KeyPressPacket::handle
         );
 
-        CatocraftMod.LOGGER.info(
-                "[NetworkHandler] Registered packets: revelation_glow, equipment_sync, open_equipment_menu, equipment_slot_update"
-        );
+        CatocraftMod.LOGGER.info("[NetworkHandler] Registered dynamic menu payloads");
     }
 
     /** Utility for sending payloads to a specific player. */
