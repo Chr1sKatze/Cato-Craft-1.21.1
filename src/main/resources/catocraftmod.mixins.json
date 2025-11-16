@@ -10,7 +10,15 @@
     "AnvilScreenHideRenameMixin",
     "AnvilScreenHideLabelsMixin",
     "ServerLevelMixin",
-    "ItemStackReinforcementMixin"
+    "ItemStackReinforcementMixin",
+    "LightTextureMixin",
+    "LightMapRendererMixin",
+    "LightEngineMixin",
+    "LayerLightSectionStorageMixin",
+    "BlockLightEngineMixin",
+    "BlockLightSectionStorageMixin",
+    "EntityRendererMixin",
+    "LevelRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

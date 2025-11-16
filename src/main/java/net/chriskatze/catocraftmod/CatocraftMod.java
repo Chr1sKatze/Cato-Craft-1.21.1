@@ -210,25 +210,12 @@ public class CatocraftMod {
                         })
         );
 
-        // 🟢 Dynamic menu system commands
-        net.chriskatze.catocraftmod.command.OpenMenuCommand.register(event.getDispatcher());
-        net.chriskatze.catocraftmod.command.CleanDynamicMenusCommand.register(event.getDispatcher());
-        net.chriskatze.catocraftmod.command.CreatorHubCommand.register(event.getDispatcher());
-
-        // 🧩 Menu Creator Test Command (opens test container/screen)
-        net.chriskatze.catocraftmod.command.MenuCreatorTestCommand.register(event.getDispatcher());
-        LOGGER.info("[Commands] Registered /menucreator test command");
-    }
-
-    // ────────────────────────────────────────────────
-    // Dynamic Menu WorldData Cleanup
-    // ────────────────────────────────────────────────
-    @SubscribeEvent
-    public void onWorldSave(LevelEvent.Save event) {
-        if (event.getLevel() instanceof ServerLevel level) {
-            var data = DynamicMenuWorldData.get(level);
-            data.cleanup(level.registryAccess());
-            LOGGER.debug("[Catocraft] Cleaned up DynamicMenuWorldData for world {}", level.dimension().location());
+        // Equipment debug command
+        EquipmentDebugCommand.register(event.getDispatcher());
+        // Menu Creator command (client-only)
+        if (net.neoforged.fml.loading.FMLLoader.getDist().isClient()) {
+            net.chriskatze.catocraftmod.menucreator.MenuCreatorCommand.register(event.getDispatcher());
+            LOGGER.info("[CatocraftMod] Registered client-only MenuCreatorCommand for generic menu creation.");
         }
     }
 
